@@ -1,13 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use camino::Utf8PathBuf;
 use serde::{Deserialize, Serialize};
-
-pub type ModuleId = String;
-pub fn module_id(package_name: &str, file_path: &Utf8PathBuf) -> ModuleId {
-    format!("{}:{}", package_name, file_path.with_extension("").to_string())
-}
-
-
+use crate::modules::ModuleId;
 
 // One file gets mapped to one or more modules.
 pub struct ModuleNode {

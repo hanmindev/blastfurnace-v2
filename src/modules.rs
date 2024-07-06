@@ -2,7 +2,7 @@ use std::collections::{HashSet, VecDeque};
 use camino::{Utf8Path, Utf8PathBuf};
 use crate::modules::cache::BuildCacheLayer;
 use crate::file_system::FileSystem;
-use crate::modules::types::{module_id, ModuleCachableData, ModuleGraph};
+use crate::modules::types::{ModuleCachableData, ModuleGraph};
 
 mod types;
 mod cache;
@@ -86,4 +86,10 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
 
         Ok(())
     }
+}
+
+pub type ModuleId = String;
+
+pub fn module_id(package_name: &str, file_path: &Utf8PathBuf) -> ModuleId {
+    format!("{}:{}", package_name, file_path.with_extension("").to_string())
 }

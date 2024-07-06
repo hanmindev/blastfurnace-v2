@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use std::io::Write;
-use camino::{Utf8Path};
-use crate::file_system::{FileSystem, FileSystemError};
-use crate::modules::types::{ModuleCachableData, ModuleId};
+use camino::Utf8Path;
+use crate::file_system::FileSystem;
+use crate::modules::ModuleId;
+use crate::modules::types::ModuleCachableData;
 
 pub struct BuildCacheLayer<'p, T: FileSystem> {
     pub file_system: &'p mut T,
