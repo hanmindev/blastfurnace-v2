@@ -1,11 +1,10 @@
 use std::collections::{HashSet, VecDeque};
 use camino::{Utf8Path, Utf8PathBuf};
 use crate::modules::cache::BuildCacheLayer;
-use crate::modules::file_system::FileSystem;
+use crate::file_system::FileSystem;
 use crate::modules::types::{module_id, ModuleCachableData, ModuleGraph};
 
 mod types;
-mod file_system;
 mod cache;
 
 enum ModuleBuildError {

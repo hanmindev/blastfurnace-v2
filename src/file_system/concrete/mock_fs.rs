@@ -2,7 +2,7 @@ use camino::Utf8PathBuf;
 use std::collections::{HashMap, HashSet};
 use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
-use crate::modules::file_system::{FileSystem, FileSystemError, FileSystemResult};
+use crate::file_system::{FileSystem, FileSystemError, FileSystemResult};
 
 type Content = String;
 struct StringWriter {

@@ -1,7 +1,7 @@
 use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
-use crate::modules::file_system::{Utf8PathBuf, FileSystem, FileSystemError, FileSystemResult};
+use crate::file_system::{Utf8PathBuf, FileSystem, FileSystemError, FileSystemResult};
 
 pub struct SystemFs;
 

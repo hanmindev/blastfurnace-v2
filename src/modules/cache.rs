@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::io::Write;
 use camino::{Utf8Path};
-use crate::modules::file_system::{FileSystem, FileSystemError};
+use crate::file_system::{FileSystem, FileSystemError};
 use crate::modules::types::{ModuleCachableData, ModuleId};
 
 pub struct BuildCacheLayer<'p, T: FileSystem> {
