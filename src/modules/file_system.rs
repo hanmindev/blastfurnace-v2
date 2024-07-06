@@ -1,8 +1,7 @@
-mod byte_stream;
 mod concrete;
 
+use std::io::{Read, Write};
 use camino::Utf8PathBuf;
-use crate::modules::file_system::byte_stream::ByteStream;
 
 #[derive(Debug)]
 pub enum FileSystemError {
@@ -14,5 +13,6 @@ pub type FileSystemResult<T> = Result<T, FileSystemError>;
 
 pub trait FileSystem {
     fn list_files_with_extension(&self, path: &Utf8PathBuf, extension: &str) -> Vec<Utf8PathBuf>;
-    fn read_file(&self, file_path: &Utf8PathBuf) -> FileSystemResult<ByteStream>;
+    fn get_reader(&self, file_path: &Utf8PathBuf) -> FileSystemResult<Box<dyn Read>>;
+    fn get_writer(&mut self, file_path: &Utf8PathBuf) -> FileSystemResult<Box<dyn Write>>;
 }

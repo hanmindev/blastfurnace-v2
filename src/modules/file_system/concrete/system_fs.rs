@@ -1,44 +1,9 @@
 use std::fs;
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Write};
 use crate::modules::file_system::{Utf8PathBuf, FileSystem, FileSystemError, FileSystemResult};
-use crate::modules::file_system::byte_stream::{ByteStream, ByteStreamable};
 
 pub struct SystemFs;
-
-pub struct FileReader {
-    // TODO: make this more efficient instead of reading the whole file into memory
-    file: File,
-    str: String,
-    index: usize,
-}
-
-impl FileReader {
-    pub fn new(file: File) -> FileReader {
-        let mut file_reader = FileReader {
-            file,
-            str: String::new(),
-            index: 0,
-        };
-        file_reader
-            .file
-            .read_to_string(&mut file_reader.str)
-            .expect("Unable to read file");
-        file_reader
-    }
-}
-
-impl ByteStreamable for FileReader {
-    fn next(&mut self) -> char {
-        if self.index >= self.str.len() {
-            return '\0';
-        }
-
-        let c = self.str.as_bytes()[self.index] as char;
-        self.index += 1;
-        c
-    }
-}
 
 impl SystemFs {
     fn new() -> FileSystemResult<SystemFs> {
@@ -63,9 +28,16 @@ impl FileSystem for SystemFs {
         files
     }
 
-    fn read_file(&self, file_path: &Utf8PathBuf) -> FileSystemResult<ByteStream> {
+    fn get_reader(&self, file_path: &Utf8PathBuf) -> FileSystemResult<Box<dyn Read>> {
         match File::open(file_path) {
-            Ok(file) => Ok(ByteStream::new(Box::new(FileReader::new(file)))),
+            Ok(file) => Ok(Box::new(file)),
+            Err(_) => Err(FileSystemError::FileNotFound),
+        }
+    }
+
+    fn get_writer(&mut self, file_path: &Utf8PathBuf) -> FileSystemResult<Box<dyn Write>> {
+        match File::create(file_path) {
+            Ok(file) => Ok(Box::new(file)),
             Err(_) => Err(FileSystemError::FileNotFound),
         }
     }
