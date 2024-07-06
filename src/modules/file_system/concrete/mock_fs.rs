@@ -101,4 +101,8 @@ impl FileSystem for MockFileSystem {
             file_path: file_path.clone(),
         }))
     }
+
+    fn get_file_age(&self, _file_path: &Utf8PathBuf) -> FileSystemResult<u128> {
+        return Ok(1);
+    }
 }

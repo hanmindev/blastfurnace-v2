@@ -7,6 +7,8 @@ pub fn module_id(package_name: &str, file_path: &Utf8PathBuf) -> ModuleId {
     format!("{}:{}", package_name, file_path.with_extension("").to_string())
 }
 
+
+
 // One file gets mapped to one or more modules.
 pub struct ModuleNode {
     // immutable metadata: based on file location, does not change after initial creation
@@ -18,12 +20,12 @@ pub struct ModuleNode {
     pub body: Option<ModuleCachableData>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct ModuleCachableData {
-    pub read_on: u64, // when this data is from
+    pub read_on: u128, // when this data is from
     pub direct_deps: HashSet<ModuleId>, // direct dependencies, used for computing the dependency graph
     pub definitions: Vec<String>, // front-end objects
-    pub object: String, // the object code created by the back-end
+    pub object: Option<String>, // the object code created by the back-end
 }
 
 impl ModuleNode {

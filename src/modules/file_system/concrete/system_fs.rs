@@ -35,6 +35,21 @@ impl FileSystem for SystemFs {
         }
     }
 
+    fn get_file_age(&self, file_path: &Utf8PathBuf) -> FileSystemResult<u128> {
+        match fs::metadata(file_path) {
+            Ok(metadata) => {
+                if let Ok(time) = metadata.modified() {
+                    if let Ok(duration) = time.duration_since(std::time::SystemTime::UNIX_EPOCH) {
+                        return Ok(duration.as_millis());
+                    }
+                }
+                Err(FileSystemError::FileNotFound)
+            }
+            Err(_) => Err(FileSystemError::FileNotFound),
+        }
+
+    }
+
     fn get_writer(&mut self, file_path: &Utf8PathBuf) -> FileSystemResult<Box<dyn Write>> {
         match File::create(file_path) {
             Ok(file) => Ok(Box::new(file)),
