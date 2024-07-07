@@ -1,10 +1,10 @@
 pub mod ast_types;
 mod passes;
 
+use crate::front::ast_types::Definition;
+use crate::modules::ModuleDependencies;
 use std::collections::{HashMap, HashSet};
 use std::io::Read;
-use crate::front::ast_types::Definition;
-use crate::modules::{ModuleDependencies, ModuleId};
 
 pub fn parse_file(file_reader: Box<dyn Read>) -> (ModuleDependencies, DefinitionMap) {
     let module_dependencies: ModuleDependencies = HashSet::new();

@@ -1,10 +1,10 @@
-mod visitor;
-mod scope_table;
-
 use crate::front::ast_types::Definition;
 use crate::front::passes::name_resolution::scope_table::ScopeTable;
 use crate::front::passes::visitor::Visitable;
 use crate::modules::ModuleId;
+
+mod scope_table;
+mod visitor;
 
 #[derive(Debug, PartialEq)]
 pub enum NameResolutionError {
@@ -17,7 +17,10 @@ pub struct NameResolver {
     scope_table: ScopeTable,
 }
 impl NameResolver {
-    pub fn run(module_id: ModuleId, definitions: &mut Vec<Definition>) -> Result<(), NameResolutionError> {
+    pub fn run(
+        module_id: ModuleId,
+        definitions: &mut Vec<Definition>,
+    ) -> Result<(), NameResolutionError> {
         let mut name_resolver = NameResolver {
             module_id,
             scope_table: ScopeTable::new(),
@@ -34,9 +37,13 @@ impl NameResolver {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use super::*;
-    use crate::front::ast_types::{Definition, Reference, StructDef, Type, TypeReference, VarDef, VarReference};
+
+    use crate::front::ast_types::{
+        Definition, StructDef, Type, TypeReference, VarDef, VarReference,
+    };
     use crate::modules::ModuleId;
+
+    use super::*;
 
     #[test]
     fn test_name_resolution() {
@@ -50,7 +57,10 @@ mod tests {
                 name: TypeReference::new("struct_b".to_string()),
                 field_types: {
                     let mut field_types = HashMap::new();
-                    field_types.insert("field_a".to_string(), Type::Struct(TypeReference::new("struct_a".to_string())));
+                    field_types.insert(
+                        "field_a".to_string(),
+                        Type::Struct(TypeReference::new("struct_a".to_string())),
+                    );
                     field_types.insert("field_b".to_string(), Type::Int);
                     field_types
                 },
@@ -66,17 +76,26 @@ mod tests {
 
         match definitions[0] {
             Definition::StructDef(ref struct_def) => {
-                assert_eq!(struct_def.name.resolved, Some((module_id.clone(), "0:struct_a".to_string())));
+                assert_eq!(
+                    struct_def.name.resolved,
+                    Some((module_id.clone(), "0:struct_a".to_string()))
+                );
             }
             _ => panic!("Expected StructDef"),
         }
 
         match definitions[1] {
             Definition::StructDef(ref struct_def) => {
-                assert_eq!(struct_def.name.resolved, Some((module_id.clone(), "0:struct_b".to_string())));
+                assert_eq!(
+                    struct_def.name.resolved,
+                    Some((module_id.clone(), "0:struct_b".to_string()))
+                );
                 match struct_def.field_types["field_a"] {
                     Type::Struct(ref type_ref) => {
-                        assert_eq!(type_ref.resolved, Some((module_id.clone(), "0:struct_a".to_string())));
+                        assert_eq!(
+                            type_ref.resolved,
+                            Some((module_id.clone(), "0:struct_a".to_string()))
+                        );
                     }
                     _ => panic!("Expected Struct"),
                 }
@@ -86,10 +105,16 @@ mod tests {
 
         match definitions[2] {
             Definition::VarDef(ref var_def) => {
-                assert_eq!(var_def.name.resolved, Some((module_id.clone(), "0:var_a".to_string())));
+                assert_eq!(
+                    var_def.name.resolved,
+                    Some((module_id.clone(), "0:var_a".to_string()))
+                );
                 match var_def.ty {
                     Type::Struct(ref type_ref) => {
-                        assert_eq!(type_ref.resolved, Some((module_id.clone(), "0:struct_b".to_string())));
+                        assert_eq!(
+                            type_ref.resolved,
+                            Some((module_id.clone(), "0:struct_b".to_string()))
+                        );
                     }
                     _ => panic!("Expected Struct"),
                 }

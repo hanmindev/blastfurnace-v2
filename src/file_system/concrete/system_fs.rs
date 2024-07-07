@@ -1,7 +1,7 @@
+use crate::file_system::{FileSystem, FileSystemError, FileSystemResult, Utf8PathBuf};
 use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
-use crate::file_system::{Utf8PathBuf, FileSystem, FileSystemError, FileSystemResult};
 
 pub struct SystemFs;
 
@@ -12,7 +12,11 @@ impl SystemFs {
 }
 
 impl FileSystem for SystemFs {
-    fn list_files_with_extension(&self, folder_path: &Utf8PathBuf, extension: &str) -> Vec<Utf8PathBuf> {
+    fn list_files_with_extension(
+        &self,
+        folder_path: &Utf8PathBuf,
+        extension: &str,
+    ) -> Vec<Utf8PathBuf> {
         let mut files = Vec::new();
         if let Ok(paths) = fs::read_dir(&folder_path) {
             for dir_entry_res in paths {
@@ -47,7 +51,6 @@ impl FileSystem for SystemFs {
             }
             Err(_) => Err(FileSystemError::FileNotFound),
         }
-
     }
 
     fn get_writer(&mut self, file_path: &Utf8PathBuf) -> FileSystemResult<Box<dyn Write>> {

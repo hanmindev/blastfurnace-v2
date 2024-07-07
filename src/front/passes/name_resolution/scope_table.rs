@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use crate::front::passes::name_resolution::NameResolutionError;
 use crate::modules::ModuleId;
+use std::collections::HashMap;
 
 type InternalResolveResult<T> = Result<T, NameResolutionError>;
 
@@ -74,16 +74,19 @@ impl ScopeTable {
             node.symbols.insert(key, resolved.clone());
             Ok(resolved)
         } else {
-            let resolved = (module_id.clone(), match self.global_count.get_mut(&key) {
-                Some(count) => {
-                    *count += 1;
-                    name_format(name, *count)
-                }
-                None => {
-                    self.global_count.insert((name.clone(), symbol_type), 0);
-                    name_format(name, 0)
-                }
-            });
+            let resolved = (
+                module_id.clone(),
+                match self.global_count.get_mut(&key) {
+                    Some(count) => {
+                        *count += 1;
+                        name_format(name, *count)
+                    }
+                    None => {
+                        self.global_count.insert((name.clone(), symbol_type), 0);
+                        name_format(name, 0)
+                    }
+                },
+            );
 
             match node.symbols.get_mut(&key) {
                 Some(_) => {
@@ -114,7 +117,11 @@ impl ScopeTable {
         None
     }
 
-    pub fn scope_lookup(&self, name: &String, symbol_type: SymbolType) -> Option<(ModuleId, String)> {
+    pub fn scope_lookup(
+        &self,
+        name: &String,
+        symbol_type: SymbolType,
+    ) -> Option<(ModuleId, String)> {
         for node in self.stack.iter().rev() {
             if let Some(sym) = node.symbols.get(&(name.to_string(), symbol_type)) {
                 return Some(sym.clone());
@@ -145,16 +152,19 @@ impl ScopeTable {
 
         // symbol is not resolved yet, bind it to the current scope so future lookups will be equal
 
-        let resolved = (module_id.clone(), match self.global_count.get_mut(&key) {
-            Some(count) => {
-                *count += 1;
-                name_format(name, *count)
-            }
-            None => {
-                self.global_count.insert(key.clone(), 0);
-                name_format(name, 0)
-            }
-        });
+        let resolved = (
+            module_id.clone(),
+            match self.global_count.get_mut(&key) {
+                Some(count) => {
+                    *count += 1;
+                    name_format(name, *count)
+                }
+                None => {
+                    self.global_count.insert(key.clone(), 0);
+                    name_format(name, 0)
+                }
+            },
+        );
 
         self.stack
             .last_mut()

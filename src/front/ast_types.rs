@@ -1,9 +1,9 @@
+use crate::modules::ModuleId;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Debug;
 use std::marker::PhantomData;
-use serde::{Deserialize, Serialize};
-use crate::modules::ModuleId;
 
 // Reference<T, R> type idea from https://thume.ca/2019/04/18/writing-a-compiler-in-rust/
 #[derive(PartialEq, Clone, Serialize, Deserialize)]
