@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::io::Read;
 use std::str::{CharIndices};
 
@@ -34,8 +35,8 @@ pub enum TokenError {
 }
 
 pub struct Span {
-    pub lo: u64,
-    pub hi: u64,
+    pub lo: usize,
+    pub hi: usize,
 }
 
 pub struct Token {
@@ -48,6 +49,8 @@ pub struct Lexer<'src> {
     chars: CharIndices<'src>,
     curr: char,
     pos: usize,
+
+    peeked_chars: VecDeque<(usize, char)>,
 }
 
 impl<'src> Lexer<'src> {
@@ -57,6 +60,7 @@ impl<'src> Lexer<'src> {
             chars: src.char_indices(),
             curr: '\0',
             pos: 0,
+            peeked_chars: Default::default(),
         };
         lexer.eat();
         lexer
@@ -64,8 +68,22 @@ impl<'src> Lexer<'src> {
 
     fn eat(&mut self) -> (usize, char) {
         let prev = (self.pos, self.curr);
-        (self.pos, self.curr) = self.chars.next().unwrap_or((self.src.len(), '\0'));
+        if let Some((pos, ch)) = self.peeked_chars.pop_front() {
+            (self.pos, self.curr) = (pos, ch);
+        } else {
+            (self.pos, self.curr) = self.chars.next().unwrap_or((self.src.len(), '\0'));
+        }
         prev
+    }
+
+    fn peek(&mut self, offset: usize) -> (usize, char) {
+        if offset == 0 {
+            return (self.pos, self.curr);
+        }
+        while offset > self.peeked_chars.len() {
+            self.peeked_chars.push_back(self.chars.next().unwrap_or((self.src.len(), '\0')));
+        }
+        self.peeked_chars[offset - 1]
     }
 }
 
@@ -75,7 +93,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_lexer() {
+    fn test_eat() {
         let src = "hello 안녕😎하세요 world";
         let mut lexer = Lexer::new(src);
 
@@ -87,6 +105,34 @@ mod tests {
         assert_eq!(lexer.eat(), (5, ' '));
         assert_eq!(lexer.eat(), (6, '안'));
         assert_eq!(lexer.eat(), (9, '녕'));
+        assert_eq!(lexer.eat(), (12, '😎'));
+        assert_eq!(lexer.eat(), (16, '하'));
+        assert_eq!(lexer.eat(), (19, '세'));
+        assert_eq!(lexer.eat(), (22, '요'));
+        assert_eq!(lexer.eat(), (25, ' '));
+        assert_eq!(lexer.eat(), (26, 'w'));
+        assert_eq!(lexer.eat(), (27, 'o'));
+        assert_eq!(lexer.eat(), (28, 'r'));
+        assert_eq!(lexer.eat(), (29, 'l'));
+        assert_eq!(lexer.eat(), (30, 'd'));
+        assert_eq!(lexer.eat(), (31, '\0'));
+        assert_eq!(lexer.eat(), (31, '\0'));
+    }
+
+    #[test]
+    fn test_peek() {
+        let src = "hello 안녕😎하세요 world";
+        let mut lexer = Lexer::new(src);
+
+        assert_eq!(lexer.eat(), (0, 'h'));
+        assert_eq!(lexer.eat(), (1, 'e'));
+        assert_eq!(lexer.eat(), (2, 'l'));
+        assert_eq!(lexer.eat(), (3, 'l'));
+        assert_eq!(lexer.eat(), (4, 'o'));
+        assert_eq!(lexer.eat(), (5, ' '));
+        assert_eq!(lexer.eat(), (6, '안'));
+        assert_eq!(lexer.eat(), (9, '녕'));
+        assert_eq!(lexer.peek(3), (22, '요'));
         assert_eq!(lexer.eat(), (12, '😎'));
         assert_eq!(lexer.eat(), (16, '하'));
         assert_eq!(lexer.eat(), (19, '세'));
