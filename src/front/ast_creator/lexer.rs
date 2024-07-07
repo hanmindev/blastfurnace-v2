@@ -3,7 +3,33 @@ use std::io::Read;
 use std::str::CharIndices;
 use crate::front::ast_creator::token_types::{Span, Token, TokenError, TokenKind};
 
-pub struct Lexer<'src> {
+fn get_tokens(src: &str) -> Result<Vec<Token>, Vec<TokenError>> {
+    let mut lexer = Lexer::new(src);
+    let mut tokens = Vec::new();
+    let mut errors = Vec::new();
+
+    loop {
+        match lexer.get_token() {
+            Ok(token) => {
+                if token.kind == TokenKind::Eof {
+                    break;
+                }
+                tokens.push(token);
+            }
+            Err(err) => {
+                errors.push(err);
+            }
+        }
+    }
+
+    if errors.is_empty() {
+        Ok(tokens)
+    } else {
+        Err(errors)
+    }
+}
+
+struct Lexer<'src> {
     src: &'src str,
     chars: CharIndices<'src>,
     curr: char,
@@ -136,26 +162,26 @@ mod tests {
         let src = "hello 안녕😎하세요 world";
         let mut lexer = Lexer::new(src);
 
-        assert_eq!(lexer.eat(), (0, 'h'));
-        assert_eq!(lexer.eat(), (1, 'e'));
-        assert_eq!(lexer.eat(), (2, 'l'));
-        assert_eq!(lexer.eat(), (3, 'l'));
-        assert_eq!(lexer.eat(), (4, 'o'));
-        assert_eq!(lexer.eat(), (5, ' '));
-        assert_eq!(lexer.eat(), (6, '안'));
-        assert_eq!(lexer.eat(), (9, '녕'));
-        assert_eq!(lexer.eat(), (12, '😎'));
-        assert_eq!(lexer.eat(), (16, '하'));
-        assert_eq!(lexer.eat(), (19, '세'));
-        assert_eq!(lexer.eat(), (22, '요'));
-        assert_eq!(lexer.eat(), (25, ' '));
-        assert_eq!(lexer.eat(), (26, 'w'));
-        assert_eq!(lexer.eat(), (27, 'o'));
-        assert_eq!(lexer.eat(), (28, 'r'));
-        assert_eq!(lexer.eat(), (29, 'l'));
-        assert_eq!(lexer.eat(), (30, 'd'));
-        assert_eq!(lexer.eat(), (31, '\0'));
-        assert_eq!(lexer.eat(), (31, '\0'));
+        assert_eq!(lexer.eat(), 'h');
+        assert_eq!(lexer.eat(), 'e');
+        assert_eq!(lexer.eat(), 'l');
+        assert_eq!(lexer.eat(), 'l');
+        assert_eq!(lexer.eat(), 'o');
+        assert_eq!(lexer.eat(), ' ');
+        assert_eq!(lexer.eat(), '안');
+        assert_eq!(lexer.eat(), '녕');
+        assert_eq!(lexer.eat(), '😎');
+        assert_eq!(lexer.eat(), '하');
+        assert_eq!(lexer.eat(), '세');
+        assert_eq!(lexer.eat(), '요');
+        assert_eq!(lexer.eat(), ' ');
+        assert_eq!(lexer.eat(), 'w');
+        assert_eq!(lexer.eat(), 'o');
+        assert_eq!(lexer.eat(), 'r');
+        assert_eq!(lexer.eat(), 'l');
+        assert_eq!(lexer.eat(), 'd');
+        assert_eq!(lexer.eat(), '\0');
+        assert_eq!(lexer.eat(), '\0');
     }
 
     #[test]
@@ -163,26 +189,26 @@ mod tests {
         let src = "hello 안녕😎하세요 world";
         let mut lexer = Lexer::new(src);
 
-        assert_eq!(lexer.eat(), (0, 'h'));
-        assert_eq!(lexer.eat(), (1, 'e'));
-        assert_eq!(lexer.eat(), (2, 'l'));
-        assert_eq!(lexer.eat(), (3, 'l'));
-        assert_eq!(lexer.eat(), (4, 'o'));
-        assert_eq!(lexer.eat(), (5, ' '));
-        assert_eq!(lexer.eat(), (6, '안'));
-        assert_eq!(lexer.eat(), (9, '녕'));
-        assert_eq!(lexer.peek(3), (22, '요'));
-        assert_eq!(lexer.eat(), (12, '😎'));
-        assert_eq!(lexer.eat(), (16, '하'));
-        assert_eq!(lexer.eat(), (19, '세'));
-        assert_eq!(lexer.eat(), (22, '요'));
-        assert_eq!(lexer.eat(), (25, ' '));
-        assert_eq!(lexer.eat(), (26, 'w'));
-        assert_eq!(lexer.eat(), (27, 'o'));
-        assert_eq!(lexer.eat(), (28, 'r'));
-        assert_eq!(lexer.eat(), (29, 'l'));
-        assert_eq!(lexer.eat(), (30, 'd'));
-        assert_eq!(lexer.eat(), (31, '\0'));
-        assert_eq!(lexer.eat(), (31, '\0'));
+        assert_eq!(lexer.eat(), 'h');
+        assert_eq!(lexer.eat(), 'e');
+        assert_eq!(lexer.eat(), 'l');
+        assert_eq!(lexer.eat(), 'l');
+        assert_eq!(lexer.eat(), 'o');
+        assert_eq!(lexer.eat(), ' ');
+        assert_eq!(lexer.eat(), '안');
+        assert_eq!(lexer.eat(), '녕');
+        assert_eq!(lexer.peek(3), '요');
+        assert_eq!(lexer.eat(), '😎');
+        assert_eq!(lexer.eat(), '하');
+        assert_eq!(lexer.eat(), '세');
+        assert_eq!(lexer.eat(), '요');
+        assert_eq!(lexer.eat(), ' ');
+        assert_eq!(lexer.eat(), 'w');
+        assert_eq!(lexer.eat(), 'o');
+        assert_eq!(lexer.eat(), 'r');
+        assert_eq!(lexer.eat(), 'l');
+        assert_eq!(lexer.eat(), 'd');
+        assert_eq!(lexer.eat(), '\0');
+        assert_eq!(lexer.eat(), '\0');
     }
 }
