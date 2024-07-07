@@ -23,11 +23,11 @@ impl<T: Debug, R: Debug> Debug for Reference<T, R> {
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct VarReference(Reference<String, (ModuleId, String)>);
+pub struct VarReference(pub Reference<String, (ModuleId, String)>);
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct TypeReference(Reference<String, (ModuleId, String)>);
+pub struct TypeReference(pub Reference<String, (ModuleId, String)>);
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct FunctionReference(Reference<String, (ModuleId, String)>);
+pub struct FunctionReference(pub Reference<String, (ModuleId, String)>);
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Type {
