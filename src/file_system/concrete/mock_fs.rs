@@ -1,8 +1,8 @@
+use crate::file_system::{FileSystem, FileSystemError, FileSystemResult};
 use camino::Utf8PathBuf;
 use std::collections::{HashMap, HashSet};
 use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
-use crate::modules::file_system::{FileSystem, FileSystemError, FileSystemResult};
 
 type Content = String;
 struct StringWriter {
@@ -30,7 +30,10 @@ impl Write for StringWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         self.content.push_str(&String::from_utf8_lossy(buf));
 
-        self.files.lock().unwrap().insert(self.file_path.clone(), self.content.clone());
+        self.files
+            .lock()
+            .unwrap()
+            .insert(self.file_path.clone(), self.content.clone());
 
         Ok(buf.len())
     }
@@ -62,7 +65,6 @@ impl MockFileSystem {
         self.dirs.insert(path);
     }
 }
-
 
 impl FileSystem for MockFileSystem {
     fn list_files_with_extension(&self, path: &Utf8PathBuf, extension: &str) -> Vec<Utf8PathBuf> {

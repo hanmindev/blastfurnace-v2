@@ -1,8 +1,9 @@
+use crate::file_system::FileSystem;
+use crate::modules::types::ModuleCachableData;
+use crate::modules::ModuleId;
+use camino::Utf8Path;
 use std::collections::HashMap;
 use std::io::Write;
-use camino::{Utf8Path};
-use crate::modules::file_system::{FileSystem, FileSystemError};
-use crate::modules::types::{ModuleCachableData, ModuleId};
 
 pub struct BuildCacheLayer<'p, T: FileSystem> {
     pub file_system: &'p mut T,
@@ -26,7 +27,8 @@ impl<T: FileSystem> BuildCacheLayer<'_, T> {
             match self.file_system.get_reader(&cache_location.to_path_buf()) {
                 Ok(reader) => {
                     // TODO: add proper error handling
-                    let cache: HashMap<ModuleId, ModuleCachableData> = serde_json::from_reader(reader).unwrap();
+                    let cache: HashMap<ModuleId, ModuleCachableData> =
+                        serde_json::from_reader(reader).unwrap();
                     self.cache = Some(cache);
                 }
                 Err(_) => {
@@ -44,7 +46,10 @@ impl<T: FileSystem> BuildCacheLayer<'_, T> {
             // TODO: add proper error handling
             let j = serde_json::to_string(cache).unwrap();
             // TODO: add proper error handling
-            let mut file = self.file_system.get_writer(&cache_location.to_path_buf()).unwrap();
+            let mut file = self
+                .file_system
+                .get_writer(&cache_location.to_path_buf())
+                .unwrap();
             // TODO: add proper error handling
             file.write_all(j.as_bytes()).unwrap();
         }
