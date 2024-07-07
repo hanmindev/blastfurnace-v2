@@ -11,10 +11,11 @@ fn get_tokens(src: &str) -> Result<Vec<Token>, Vec<TokenError>> {
     loop {
         match lexer.get_token() {
             Ok(token) => {
-                if token.kind == TokenKind::Eof {
+                let break_loop = token.kind == TokenKind::Eof;
+                tokens.push(token);
+                if break_loop {
                     break;
                 }
-                tokens.push(token);
             }
             Err(err) => {
                 errors.push(err);
@@ -72,16 +73,12 @@ impl<'src> Lexer<'src> {
     }
 
     pub fn get_token(&mut self) -> Result<Token, TokenError> {
+        self.skip_ignoreable();
         let lo = self.pos;
         return Ok(Token { kind: self.parse_token()?, span: Span { lo, hi: self.pos - 1 } });
     }
 
-    fn parse_token(&mut self) -> Result<TokenKind, TokenError> {
-        // check for EOF
-        if self.curr == '\0' {
-            return Ok(TokenKind::Eof);
-        }
-
+    fn skip_ignoreable(&mut self) {
         // skip whitespace and comments
         loop {
             let is_whitespace = self.curr.is_whitespace();
@@ -104,6 +101,14 @@ impl<'src> Lexer<'src> {
             if !is_whitespace && !is_comment_start {
                 break;
             }
+        }
+    }
+
+    fn parse_token(&mut self) -> Result<TokenKind, TokenError> {
+        // check for EOF
+        if self.curr == '\0' {
+            self.pos += 1;
+            return Ok(TokenKind::Eof);
         }
 
         // check for identifier
@@ -210,5 +215,27 @@ mod tests {
         assert_eq!(lexer.eat(), 'd');
         assert_eq!(lexer.eat(), '\0');
         assert_eq!(lexer.eat(), '\0');
+    }
+
+    #[test]
+fn test_get_tokens() {
+        let src = "use void int static struct fn";
+        let tokens = get_tokens(src).unwrap();
+        assert_eq!(tokens.len(), 7);
+        assert_eq!(tokens[0].kind, TokenKind::Use);
+        assert_eq!(tokens[1].kind, TokenKind::TVoid);
+        assert_eq!(tokens[2].kind, TokenKind::TInt);
+        assert_eq!(tokens[3].kind, TokenKind::Static);
+        assert_eq!(tokens[4].kind, TokenKind::Struct);
+        assert_eq!(tokens[5].kind, TokenKind::Fn);
+        assert_eq!(tokens[6].kind, TokenKind::Eof);
+
+        assert_eq!(tokens[0].span, Span { lo: 0, hi: 2 });
+        assert_eq!(tokens[1].span, Span { lo: 4, hi: 7 });
+        assert_eq!(tokens[2].span, Span { lo: 9, hi: 11 });
+        assert_eq!(tokens[3].span, Span { lo: 13, hi: 18 });
+        assert_eq!(tokens[4].span, Span { lo: 20, hi: 25 });
+        assert_eq!(tokens[5].span, Span { lo: 27, hi: 28 });
+        assert_eq!(tokens[6].span, Span { lo: 29, hi: 29 });
     }
 }
