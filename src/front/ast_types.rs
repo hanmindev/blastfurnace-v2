@@ -3,6 +3,7 @@ use std::fmt;
 use std::fmt::Debug;
 use std::rc::Rc;
 use serde::{Deserialize, Serialize};
+use crate::modules::ModuleId;
 
 // Reference<T, R> type idea from https://thume.ca/2019/04/18/writing-a-compiler-in-rust/
 #[derive(PartialEq, Clone, Serialize, Deserialize)]
@@ -21,9 +22,12 @@ impl<T: Debug, R: Debug> Debug for Reference<T, R> {
     }
 }
 
-pub type VarReference = Reference<String, String>;
-pub type TypeReference = Reference<String, String>;
-pub type FunctionReference = Reference<String, String>;
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct VarReference(Reference<String, (ModuleId, String)>);
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct TypeReference(Reference<String, (ModuleId, String)>);
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct FunctionReference(Reference<String, (ModuleId, String)>);
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Type {

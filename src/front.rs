@@ -1,4 +1,5 @@
 pub mod ast_types;
+mod visitor;
 
 use std::collections::{HashMap, HashSet};
 use std::io::Read;
