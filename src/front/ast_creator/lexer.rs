@@ -45,7 +45,7 @@ impl<'src> Lexer<'src> {
         self.peeked_chars[offset - 1].1
     }
 
-    fn get_token(&mut self) -> Result<Token, TokenError> {
+    pub fn get_token(&mut self) -> Result<Token, TokenError> {
         let lo = self.pos;
         return Ok(Token { kind: self.parse_token()?, span: Span { lo, hi: self.pos - 1 } });
     }
