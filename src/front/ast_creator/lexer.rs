@@ -24,7 +24,13 @@ pub enum TokenKind {
     Fn,
 
     // misc
+    Colon,
     SemiColon,
+    Comma,
+
+    LBrace,
+    RBrace,
+
     Eof,
 }
 
@@ -32,6 +38,7 @@ pub enum TokenKind {
 pub enum TokenError {
     InvalidToken(String),
     MultipleDecimals,
+    Unknown,
 }
 
 pub struct Span {
@@ -66,8 +73,8 @@ impl<'src> Lexer<'src> {
         lexer
     }
 
-    fn eat(&mut self) -> (usize, char) {
-        let prev = (self.pos, self.curr);
+    fn eat(&mut self) -> char {
+        let prev = self.curr;
         if let Some((pos, ch)) = self.peeked_chars.pop_front() {
             (self.pos, self.curr) = (pos, ch);
         } else {
@@ -76,14 +83,94 @@ impl<'src> Lexer<'src> {
         prev
     }
 
-    fn peek(&mut self, offset: usize) -> (usize, char) {
+    fn peek(&mut self, offset: usize) -> char {
         if offset == 0 {
-            return (self.pos, self.curr);
+            return self.curr;
         }
         while offset > self.peeked_chars.len() {
             self.peeked_chars.push_back(self.chars.next().unwrap_or((self.src.len(), '\0')));
         }
-        self.peeked_chars[offset - 1]
+        self.peeked_chars[offset - 1].1
+    }
+
+    fn get_token(&mut self) -> Result<Token, TokenError> {
+        let lo = self.pos;
+        return Ok(Token { kind: self.parse_token()?, span: Span { lo, hi: self.pos - 1 } });
+    }
+
+    fn parse_token(&mut self) -> Result<TokenKind, TokenError> {
+        // check for EOF
+        if self.curr == '\0' {
+            return Ok(TokenKind::Eof);
+        }
+
+        // skip whitespace and comments
+        loop {
+            let is_whitespace = self.curr.is_whitespace();
+            while self.curr.is_whitespace() {
+                self.eat();
+            }
+            let mut is_comment_start = false;
+            if self.curr == '/' && self.peek(1) == '/' {
+                is_comment_start = true;
+                // comment until end of line
+                loop {
+                    self.eat();
+                    if self.curr == '\n' || self.curr == '\r' {
+                        self.eat();
+                        break;
+                    }
+                }
+            }
+
+            if !is_whitespace && !is_comment_start {
+                break;
+            }
+        }
+
+        // check for identifier
+        // identifier: [a-zA-Z_][a-zA-Z0-9_]*
+        if self.curr.is_alphabetic() {
+            let mut ident = String::new();
+
+            // read word and set to ident
+            while self.curr.is_alphanumeric() || self.curr == '_' || self.curr == '-' {
+                ident.push(self.eat());
+            }
+
+            return Ok(match ident.as_str() {
+                "use" => TokenKind::Use,
+
+                "void" => TokenKind::TVoid,
+                "int" => TokenKind::TInt,
+
+                "static" => TokenKind::Static,
+                "struct" => TokenKind::Struct,
+                "fn" => TokenKind::Fn,
+                _ => TokenKind::Ident(ident),
+            });
+        }
+
+        let prev = self.eat();
+
+        match (prev, self.curr) {
+            (':', ':') => {
+                self.eat();
+                return Ok(TokenKind::DoubleColon);
+            }
+            _ => {}
+        }
+
+        // match singletons
+        Ok(match prev {
+            ':' => TokenKind::Colon,
+            ';' => TokenKind::SemiColon,
+            ',' => TokenKind::Comma,
+
+            '{' => TokenKind::LBrace,
+            '}' => TokenKind::RBrace,
+            _ => return Err(TokenError::InvalidToken(format!("{}", prev))),
+        })
     }
 }
 
