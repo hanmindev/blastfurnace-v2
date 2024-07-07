@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 // One file gets mapped to one or more modules.
 pub struct ModuleNode {
     // immutable metadata: based on file location, does not change after initial creation
-    pub id: ModuleId,                  // unique identifier
+    pub package_name: String, // the package name this module belongs to
     pub rel_path: Utf8PathBuf, // the file where the module is defined relative to package root
     pub children: HashSet<ModuleId>,   // child modules
 
@@ -24,10 +24,10 @@ pub struct ModuleCachableData {
 }
 
 impl ModuleNode {
-    fn new(id: ModuleId, origin_file_path: Utf8PathBuf) -> ModuleNode {
+    fn new(package_name: &str, rel_path: Utf8PathBuf) -> ModuleNode {
         ModuleNode {
-            id,
-            rel_path: origin_file_path,
+            package_name: package_name.to_string(),
+            rel_path,
             children: HashSet::new(),
 
             body: None,
@@ -50,7 +50,7 @@ impl ModuleGraph {
         }
     }
 
-    pub fn create_node(&mut self, id: ModuleId, rel_path: &Utf8PathBuf, module_name: &str) {
-        self.nodes.insert(id.clone(), ModuleNode::new(id, rel_path.clone()));
+    pub fn create_node(&mut self, id: ModuleId, package_name: &str, rel_path: &Utf8PathBuf) {
+        self.nodes.insert(id.clone(), ModuleNode::new(package_name, rel_path.clone()));
     }
 }

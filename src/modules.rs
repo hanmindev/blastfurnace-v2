@@ -49,14 +49,15 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
             for file_path in file_paths {
                 if let Some(module_name) = file_path.file_name() {
                     queue.push_back(file_path.with_extension(""));
-                    let id = module_id_from_absolute(package_name, &file_path, path);
+                    let rel_path = &create_rel_path(&file_path, &path);
+                    let id = module_id_from_local(package_name, rel_path);
 
                     if find_root && module_name == "main" {
                         self.module_graph.root = Some(id.clone());
                         find_root = false;
                     }
 
-                    self.module_graph.create_node(id, &file_path, module_name);
+                    self.module_graph.create_node(id, &package_name, &rel_path);
                 }
             }
 
@@ -72,15 +73,16 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
     // can be multithreaded easily
     pub fn load_module_bodies(&mut self) -> ModuleBuildResult<()> {
         for node in self.module_graph.nodes.values_mut() {
-            let file_path = node.rel_path.clone();
+            let rel_path = node.rel_path.clone();
+            let abs_path = self.module_graph.package_map.get(&node.package_name).unwrap().join(&rel_path);
 
             let age = self
                 .build_cache
                 .file_system
-                .get_file_age(&file_path)
+                .get_file_age(&abs_path)
                 .or(Err(ModuleBuildError::FileNoLongerExists))?;
 
-            if let Some(&ref body) = self.build_cache.get_module(&node.id) {
+            if let Some(&ref body) = self.build_cache.get_module(&module_id_from_local(&node.package_name, &rel_path)) {
                 if body.read_on == age {
                     node.body = Some(body.clone());
                     continue;
@@ -91,7 +93,7 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                 let reader = self
                     .build_cache
                     .file_system
-                    .get_reader(&file_path)
+                    .get_reader(&abs_path)
                     .or(Err(ModuleBuildError::FileNoLongerExists))?;
                 let (direct_deps, definitions) = parse_file(reader);
 
@@ -108,11 +110,12 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
     }
 }
 
-pub type ModuleId = String;
-
-pub fn module_id_from_absolute(package_name: &str, file_path: &Utf8PathBuf, package_path: &Utf8PathBuf) -> ModuleId {
-    module_id_from_local(package_name, &file_path.strip_prefix(package_path).unwrap().to_path_buf())
+fn create_rel_path(file_path: &Utf8PathBuf, package_path: &Utf8PathBuf) -> Utf8PathBuf {
+    file_path.strip_prefix(package_path).unwrap().to_path_buf()
 }
+
+// the module id contains the package name and the relative path to module file from the package root.
+pub type ModuleId = String;
 
 pub fn module_id_from_local(package_name: &str, file_path: &Utf8PathBuf) -> ModuleId {
     format!(
