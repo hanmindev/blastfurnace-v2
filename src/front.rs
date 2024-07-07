@@ -1,5 +1,6 @@
 pub mod ast_types;
 mod passes;
+mod ast_creator;
 
 use crate::front::ast_types::Definition;
 use crate::modules::ModuleDependencies;
