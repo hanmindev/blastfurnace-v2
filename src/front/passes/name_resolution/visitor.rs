@@ -1,19 +1,13 @@
 use crate::front::ast_types::{Type};
-use crate::front::passes::name_resolution::NameResolver;
+use crate::front::passes::name_resolution::{NameResolutionError, NameResolver};
 use crate::front::passes::name_resolution::scope_table::SymbolType;
-use crate::front::passes::visitor::{ASTNodeEnum, GenericResolveResult, Visitable, Visitor};
-
-#[derive(Debug, PartialEq)]
-pub enum ResolverError {
-    UndefinedVariable(String),
-    Redefinition(String),
-}
+use crate::front::passes::visitor::{ASTNodeEnum, GenericVisitApplyResult, Visitable, Visitor};
 
 // TODO: less generic name
-pub type ResolveResult<T> = GenericResolveResult<T, ResolverError>;
+type NameResolutionVisitApplyResult<T> = GenericVisitApplyResult<T, NameResolutionError>;
 
-impl Visitor<(), ResolverError> for NameResolver {
-    fn apply(&mut self, ast_node: &mut ASTNodeEnum) -> ResolveResult<()> {
+impl Visitor<(), NameResolutionError> for NameResolver {
+    fn apply(&mut self, ast_node: &mut ASTNodeEnum) -> NameResolutionVisitApplyResult<()> {
         match ast_node {
             ASTNodeEnum::VarReference(_) | ASTNodeEnum::TypeReference(_) | ASTNodeEnum::FunctionReference(_) => {
                 panic!("References should not be visited directly")

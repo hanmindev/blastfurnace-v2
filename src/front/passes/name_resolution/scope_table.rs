@@ -1,9 +1,8 @@
 use std::collections::HashMap;
-use crate::front::passes::name_resolution::visitor::ResolverError;
-use crate::front::passes::name_resolution::visitor::ResolverError::Redefinition;
+use crate::front::passes::name_resolution::NameResolutionError;
 use crate::modules::ModuleId;
 
-type InternalResolveResult<T> = Result<T, ResolverError>;
+type InternalResolveResult<T> = Result<T, NameResolutionError>;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub enum SymbolType {
@@ -88,7 +87,7 @@ impl ScopeTable {
 
             match node.symbols.get_mut(&key) {
                 Some(_) => {
-                    return Err(Redefinition(name.clone()));
+                    return Err(NameResolutionError::Redefinition(name.clone()));
                 }
                 None => {
                     node.symbols.insert(key, resolved.clone());

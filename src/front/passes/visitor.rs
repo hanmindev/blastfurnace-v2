@@ -19,7 +19,7 @@ pub enum ASTNodeEnum<'a> {
     Definition(&'a mut Definition),
 }
 
-pub type GenericResolveResult<K, V> = Result<(bool, Option<K>), V>;
+pub type GenericVisitApplyResult<K, V> = Result<(bool, Option<K>), V>;
 
 pub trait Visitor<K, V> {
     /* The default implementation of apply will return true and None.
@@ -27,7 +27,7 @@ pub trait Visitor<K, V> {
 
     The apply method can be overridden to have different behaviors when visiting a node.
      */
-    fn apply(&mut self, _ast_node: &mut ASTNodeEnum) -> GenericResolveResult<K, V> {
+    fn apply(&mut self, _ast_node: &mut ASTNodeEnum) -> GenericVisitApplyResult<K, V> {
         return Ok((true, None));
     }
 }
