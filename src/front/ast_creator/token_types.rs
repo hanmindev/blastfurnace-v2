@@ -37,11 +37,13 @@ pub enum TokenError {
     Unknown,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Span {
     pub lo: usize,
     pub hi: usize,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,
     pub span: Span,
