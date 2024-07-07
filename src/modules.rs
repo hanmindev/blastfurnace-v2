@@ -2,6 +2,7 @@ use std::collections::{HashSet, VecDeque};
 use camino::{Utf8Path, Utf8PathBuf};
 use crate::modules::cache::BuildCacheLayer;
 use crate::file_system::FileSystem;
+use crate::front::parse_file;
 use crate::modules::types::{ModuleCachableData, ModuleGraph};
 
 mod types;
@@ -75,10 +76,13 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
             }
 
             node.body = {
+                let reader = self.build_cache.file_system.get_reader(&file_path).or(Err(ModuleBuildError::FileNoLongerExists))?;
+                let (direct_deps, definitions) = parse_file(reader);
+
                 Some(ModuleCachableData {
                     read_on: age,
-                    direct_deps: HashSet::new(), // TODO: actually read the files and such
-                    definitions: Vec::new(),
+                    direct_deps,
+                    definitions,
                     object: None
                 })
             };
@@ -93,3 +97,5 @@ pub type ModuleId = String;
 pub fn module_id(package_name: &str, file_path: &Utf8PathBuf) -> ModuleId {
     format!("{}:{}", package_name, file_path.with_extension("").to_string())
 }
+
+pub type ModuleDependencies = HashSet<ModuleId>;

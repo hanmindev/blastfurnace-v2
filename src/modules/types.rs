@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use camino::Utf8PathBuf;
 use serde::{Deserialize, Serialize};
-use crate::modules::ModuleId;
+use crate::front::Definitions;
+use crate::modules::{ModuleDependencies, ModuleId};
 
 // One file gets mapped to one or more modules.
 pub struct ModuleNode {
@@ -17,8 +18,8 @@ pub struct ModuleNode {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ModuleCachableData {
     pub read_on: u128, // when this data is from
-    pub direct_deps: HashSet<ModuleId>, // direct dependencies, used for computing the dependency graph
-    pub definitions: Vec<String>, // front-end objects
+    pub direct_deps: ModuleDependencies, // direct dependencies, used for computing the dependency graph
+    pub definitions: Definitions, // front-end objects
     pub object: Option<String>, // the object code created by the back-end
 }
 
