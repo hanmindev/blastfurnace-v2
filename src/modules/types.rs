@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 pub struct ModuleNode {
     // immutable metadata: based on file location, does not change after initial creation
     pub id: ModuleId,                  // unique identifier
-    pub origin_file_path: Utf8PathBuf, // the file where the module is defined
+    pub rel_path: Utf8PathBuf, // the file where the module is defined relative to package root
     pub children: HashSet<ModuleId>,   // child modules
 
     // mutable metadata: changes when file content is modified
@@ -27,7 +27,7 @@ impl ModuleNode {
     fn new(id: ModuleId, origin_file_path: Utf8PathBuf) -> ModuleNode {
         ModuleNode {
             id,
-            origin_file_path,
+            rel_path: origin_file_path,
             children: HashSet::new(),
 
             body: None,
@@ -36,20 +36,21 @@ impl ModuleNode {
 }
 
 pub struct ModuleGraph {
-    pub root: Option<ModuleId>,
-    pub nodes: HashMap<ModuleId, ModuleNode>,
+    pub root: Option<ModuleId>, // entrypoint module
+    pub package_map: HashMap<String, Utf8PathBuf>, // maps package name to package root directory
+    pub nodes: HashMap<ModuleId, ModuleNode>, // all modules
 }
 
 impl ModuleGraph {
     pub fn new() -> ModuleGraph {
         ModuleGraph {
             root: None,
+            package_map: HashMap::new(),
             nodes: HashMap::new(),
         }
     }
 
-    pub fn create_node(&mut self, id: ModuleId, file_path: &Utf8PathBuf, module_name: &str) {
-        self.nodes
-            .insert(id.clone(), ModuleNode::new(id, file_path.clone()));
+    pub fn create_node(&mut self, id: ModuleId, rel_path: &Utf8PathBuf, module_name: &str) {
+        self.nodes.insert(id.clone(), ModuleNode::new(id, rel_path.clone()));
     }
 }

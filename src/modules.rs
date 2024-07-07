@@ -34,6 +34,8 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
         path: &Utf8PathBuf,
         is_root: bool,
     ) -> ModuleBuildResult<()> {
+        self.module_graph.package_map.insert(package_name.to_string(), path.clone());
+
         let mut queue = VecDeque::from([path.clone()]);
 
         let mut find_root = is_root;
@@ -47,7 +49,7 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
             for file_path in file_paths {
                 if let Some(module_name) = file_path.file_name() {
                     queue.push_back(file_path.with_extension(""));
-                    let id = module_id(package_name, &file_path);
+                    let id = module_id_from_absolute(package_name, &file_path, path);
 
                     if find_root && module_name == "main" {
                         self.module_graph.root = Some(id.clone());
@@ -70,7 +72,7 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
     // can be multithreaded easily
     pub fn load_module_bodies(&mut self) -> ModuleBuildResult<()> {
         for node in self.module_graph.nodes.values_mut() {
-            let file_path = node.origin_file_path.clone();
+            let file_path = node.rel_path.clone();
 
             let age = self
                 .build_cache
@@ -108,7 +110,11 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
 
 pub type ModuleId = String;
 
-pub fn module_id(package_name: &str, file_path: &Utf8PathBuf) -> ModuleId {
+pub fn module_id_from_absolute(package_name: &str, file_path: &Utf8PathBuf, package_path: &Utf8PathBuf) -> ModuleId {
+    module_id_from_local(package_name, &file_path.strip_prefix(package_path).unwrap().to_path_buf())
+}
+
+pub fn module_id_from_local(package_name: &str, file_path: &Utf8PathBuf) -> ModuleId {
     format!(
         "{}:{}",
         package_name,
