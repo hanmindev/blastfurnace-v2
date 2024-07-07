@@ -1,18 +1,29 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Debug;
-use std::rc::Rc;
+use std::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 use crate::modules::ModuleId;
 
 // Reference<T, R> type idea from https://thume.ca/2019/04/18/writing-a-compiler-in-rust/
 #[derive(PartialEq, Clone, Serialize, Deserialize)]
-pub struct Reference<T, R> {
+pub struct Reference<T, R, D> {
     pub raw: T,
     pub resolved: Option<R>,
+    phantom: PhantomData<D>, // this dummy type is used to make the type unique
 }
 
-impl<T: Debug, R: Debug> Debug for Reference<T, R> {
+impl<T, R, D> Reference<T, R, D> {
+    pub fn new(raw: T) -> Reference<T, R, D> {
+        Reference {
+            raw,
+            resolved: None,
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<T: Debug, R: Debug, D> Debug for Reference<T, R, D> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(r) = &self.resolved {
             write!(f, "{:#?} => {:#?}", self.raw, r)
@@ -23,11 +34,15 @@ impl<T: Debug, R: Debug> Debug for Reference<T, R> {
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct VarReference(pub Reference<String, (ModuleId, String)>);
+pub struct VarDummy;
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct TypeReference(pub Reference<String, (ModuleId, String)>);
+pub struct TypeDummy;
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct FunctionReference(pub Reference<String, (ModuleId, String)>);
+pub struct FunctionDummy;
+
+pub type VarReference = Reference<String, (ModuleId, String), VarDummy>;
+pub type TypeReference = Reference<String, (ModuleId, String), TypeDummy>;
+pub type FunctionReference = Reference<String, (ModuleId, String), FunctionDummy>;
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Type {
