@@ -4,6 +4,7 @@ use crate::modules::cache::BuildCacheLayer;
 use crate::modules::types::{ModuleCachableData, ModuleGraph};
 use camino::{Utf8Path, Utf8PathBuf};
 use std::collections::{HashSet, VecDeque};
+use std::io::Read;
 
 mod cache;
 mod types;
@@ -11,6 +12,7 @@ mod types;
 enum ModuleBuildError {
     NoMainInRoot,
     FileNoLongerExists,
+    FileReadError
 }
 
 type ModuleBuildResult<T> = Result<T, ModuleBuildError>;
@@ -89,9 +91,10 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                 .get_file_age(&abs_path)
                 .or(Err(ModuleBuildError::FileNoLongerExists))?;
 
+            let module_id = module_id_from_local(&node.package_name, &rel_path);
             if let Some(&ref body) = self
                 .build_cache
-                .get_module(&module_id_from_local(&node.package_name, &rel_path))
+                .get_module(&module_id)
             {
                 if body.read_on == age {
                     node.body = Some(body.clone());
@@ -100,12 +103,16 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
             }
 
             node.body = {
-                let reader = self
+                let mut reader = self
                     .build_cache
                     .file_system
                     .get_reader(&abs_path)
                     .or(Err(ModuleBuildError::FileNoLongerExists))?;
-                let (direct_deps, definitions) = parse_file(reader);
+
+                let mut file_content = String::new();
+                reader.read_to_string(&mut file_content).or(Err(ModuleBuildError::FileReadError))?;
+
+                let (direct_deps, definitions) = parse_file(module_id, &file_content);
 
                 Some(ModuleCachableData {
                     read_on: age,

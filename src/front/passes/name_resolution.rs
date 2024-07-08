@@ -1,7 +1,8 @@
-use crate::front::ast_types::Definition;
-use crate::front::passes::name_resolution::scope_table::ScopeTable;
+use crate::front::ast_types::{ASTFile, Definition};
+use crate::front::DefinitionMap;
+use crate::front::passes::name_resolution::scope_table::{ScopeTable, SymbolType};
 use crate::front::passes::visitor::Visitable;
-use crate::modules::ModuleId;
+use crate::modules::{module_id_from_local, ModuleId};
 
 mod scope_table;
 mod visitor;
@@ -19,14 +20,24 @@ pub struct NameResolver {
 impl NameResolver {
     pub fn run(
         module_id: ModuleId,
-        definitions: &mut Vec<Definition>,
+        mut astfile: &mut ASTFile,
     ) -> Result<(), NameResolutionError> {
         let mut name_resolver = NameResolver {
             module_id,
             scope_table: ScopeTable::new(),
         };
 
-        for definition in definitions.iter_mut() {
+        for (key, (package_name, path, name)) in astfile.use_map.uses.iter() {
+            let import_module_id = module_id_from_local(package_name, path);
+
+            // TODO: need to handle errors, also I don't like how we are binding all three
+            name_resolver.scope_table.scope_bind(&import_module_id, key, SymbolType::Var).unwrap();
+            name_resolver.scope_table.scope_bind(&import_module_id, key, SymbolType::Fn).unwrap();
+            name_resolver.scope_table.scope_bind(&import_module_id, key, SymbolType::Struct).unwrap();
+        }
+
+
+        for definition in astfile.definitions.iter_mut() {
             definition.visit(&mut name_resolver)?;
         }
 
@@ -38,9 +49,7 @@ impl NameResolver {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::front::ast_types::{
-        Definition, StructDef, Type, TypeReference, VarDef, VarReference,
-    };
+    use crate::front::ast_types::{Definition, StructDef, Type, TypeReference, UseMap, VarDef, VarReference};
     use crate::modules::ModuleId;
 
     use super::*;
@@ -48,33 +57,38 @@ mod tests {
     #[test]
     fn test_name_resolution() {
         let module_id = ModuleId::from("module_a");
-        let mut definitions = vec![
-            Definition::StructDef(StructDef {
-                name: TypeReference::new("struct_a".to_string()),
-                field_types: HashMap::new(),
-            }),
-            Definition::StructDef(StructDef {
-                name: TypeReference::new("struct_b".to_string()),
-                field_types: {
-                    let mut field_types = HashMap::new();
-                    field_types.insert(
-                        "field_a".to_string(),
-                        Type::Struct(TypeReference::new("struct_a".to_string())),
-                    );
-                    field_types.insert("field_b".to_string(), Type::Int);
-                    field_types
-                },
-            }),
-            Definition::VarDef(VarDef {
-                name: VarReference::new("var_a".to_string()),
-                ty: Type::Struct(TypeReference::new("struct_b".to_string())),
-            }),
-        ];
+        let mut ast_file: ASTFile = ASTFile {
+            use_map: UseMap {
+                uses: HashMap::new(),
+            },
+            definitions: vec![
+                Definition::StructDef(StructDef {
+                    name: TypeReference::new("struct_a".to_string()),
+                    field_types: HashMap::new(),
+                }),
+                Definition::StructDef(StructDef {
+                    name: TypeReference::new("struct_b".to_string()),
+                    field_types: {
+                        let mut field_types = HashMap::new();
+                        field_types.insert(
+                            "field_a".to_string(),
+                            Type::Struct(TypeReference::new("struct_a".to_string())),
+                        );
+                        field_types.insert("field_b".to_string(), Type::Int);
+                        field_types
+                    },
+                }),
+                Definition::VarDef(VarDef {
+                    name: VarReference::new("var_a".to_string()),
+                    ty: Type::Struct(TypeReference::new("struct_b".to_string())),
+                }),
+            ],
+        };
 
-        let result = NameResolver::run(module_id.clone(), &mut definitions);
+        let result = NameResolver::run(module_id.clone(), &mut ast_file);
         assert_eq!(result, Ok(()));
 
-        match definitions[0] {
+        match ast_file.definitions[0] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
                     struct_def.name.resolved,
@@ -84,7 +98,7 @@ mod tests {
             _ => panic!("Expected StructDef"),
         }
 
-        match definitions[1] {
+        match ast_file.definitions[1] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
                     struct_def.name.resolved,
@@ -103,7 +117,7 @@ mod tests {
             _ => panic!("Expected StructDef"),
         }
 
-        match definitions[2] {
+        match ast_file.definitions[2] {
             Definition::VarDef(ref var_def) => {
                 assert_eq!(
                     var_def.name.resolved,
