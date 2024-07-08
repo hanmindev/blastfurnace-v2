@@ -1,6 +1,6 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
 use crate::front::ast_types::{
-    Definition, FnDef, FunctionReference, Module, StructDef, Type, TypeReference, UseMap, VarDef,
+    Definition, FnDef, FunctionReference, ASTFile, StructDef, Type, TypeReference, UseMap, VarDef,
     VarReference,
 };
 use camino::Utf8PathBuf;
@@ -8,7 +8,7 @@ use std::cmp::min;
 use std::collections::HashMap;
 use std::mem;
 
-pub fn parse_tokens(tokens: Vec<Token>) -> ParseResult<Module> {
+pub fn parse_tokens(tokens: Vec<Token>) -> ParseResult<ASTFile> {
     let mut parser = Parser::new(tokens);
     parser.parse_top_level()
 }
@@ -68,12 +68,12 @@ impl Parser {
         &self.tokens[min(self.curr_index + offset, self.tokens.len() - 1)].kind
     }
 
-    fn parse_top_level(&mut self) -> ParseResult<Module> {
-        let mut module = Module {
+    fn parse_top_level(&mut self) -> ParseResult<ASTFile> {
+        let mut module = ASTFile {
             use_map: UseMap {
                 uses: Default::default(),
             },
-            definitions: vec![],
+            definitions: Default::default(),
         };
 
         loop {

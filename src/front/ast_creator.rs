@@ -1,11 +1,11 @@
 use crate::front::ast_creator::lexer::get_tokens;
-use crate::front::ast_types::Module;
+use crate::front::ast_types::ASTFile;
 
 mod lexer;
 mod parser;
 mod token_types;
 
-fn create_ast(src: &str) -> Module {
+pub fn create_ast(src: &str) -> ASTFile {
     // TODO: error handling
     let tokens = get_tokens(src).unwrap();
     let ast = parser::parse_tokens(tokens).unwrap();
@@ -17,7 +17,7 @@ fn create_ast(src: &str) -> Module {
 mod tests {
     use crate::front::ast_creator::create_ast;
     use crate::front::ast_types::{
-        Definition, FnDef, FunctionReference, Module, StructDef, Type, TypeReference, UseMap,
+        Definition, FnDef, FunctionReference, ASTFile, StructDef, Type, TypeReference, UseMap,
         VarDef, VarReference,
     };
     use camino::Utf8PathBuf;
@@ -31,7 +31,7 @@ mod tests {
         use package_a::path::path2::{struct_d, struct_e};
         "#;
 
-        let expected_ast = Module {
+        let expected_ast = ASTFile {
             use_map: UseMap {
                 uses: HashMap::from([
                     (
@@ -92,7 +92,7 @@ mod tests {
         }
         "#;
 
-        let expected_ast = Module {
+        let expected_ast = ASTFile {
             use_map: UseMap {
                 uses: HashMap::new(),
             },
@@ -120,7 +120,7 @@ mod tests {
         static val: int;
         "#;
 
-        let expected_ast = Module {
+        let expected_ast = ASTFile {
             use_map: UseMap {
                 uses: HashMap::new(),
             },
@@ -138,7 +138,7 @@ mod tests {
         }
         "#;
 
-        let expected_ast = Module {
+        let expected_ast = ASTFile {
             use_map: UseMap {
                 uses: HashMap::new(),
             },

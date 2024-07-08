@@ -89,7 +89,7 @@ pub struct UseMap {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Module {
+pub struct ASTFile {
     pub use_map: UseMap,
     pub definitions: Vec<Definition>,
 }
