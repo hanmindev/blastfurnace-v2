@@ -1,7 +1,7 @@
+use crate::front::ast_creator::token_types::{Span, Token, TokenError, TokenKind};
 use std::collections::VecDeque;
 use std::io::Read;
 use std::str::CharIndices;
-use crate::front::ast_creator::token_types::{Span, Token, TokenError, TokenKind};
 
 pub fn get_tokens(src: &str) -> Result<Vec<Token>, Vec<TokenError>> {
     let mut lexer = Lexer::new(src);
@@ -67,7 +67,8 @@ impl<'src> Lexer<'src> {
             return self.curr;
         }
         while offset > self.peeked_chars.len() {
-            self.peeked_chars.push_back(self.chars.next().unwrap_or((self.src.len(), '\0')));
+            self.peeked_chars
+                .push_back(self.chars.next().unwrap_or((self.src.len(), '\0')));
         }
         self.peeked_chars[offset - 1].1
     }
@@ -75,7 +76,13 @@ impl<'src> Lexer<'src> {
     pub fn get_token(&mut self) -> Result<Token, TokenError> {
         self.skip_ignoreable();
         let lo = self.pos;
-        return Ok(Token { kind: self.parse_token()?, span: Span { lo, hi: self.pos - 1 } });
+        return Ok(Token {
+            kind: self.parse_token()?,
+            span: Span {
+                lo,
+                hi: self.pos - 1,
+            },
+        });
     }
 
     fn skip_ignoreable(&mut self) {
@@ -164,7 +171,6 @@ impl<'src> Lexer<'src> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -225,7 +231,7 @@ mod tests {
     }
 
     #[test]
-fn test_get_tokens() {
+    fn test_get_tokens() {
         let src = "use void int static struct fn";
         let tokens = get_tokens(src).unwrap();
         assert_eq!(tokens.len(), 7);

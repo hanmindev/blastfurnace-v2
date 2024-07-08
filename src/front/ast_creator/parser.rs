@@ -1,9 +1,12 @@
+use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
+use crate::front::ast_types::{
+    Definition, FnDef, FunctionReference, Module, StructDef, Type, TypeReference, UseMap, VarDef,
+    VarReference,
+};
+use camino::Utf8PathBuf;
 use std::cmp::min;
 use std::collections::HashMap;
 use std::mem;
-use camino::Utf8PathBuf;
-use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
-use crate::front::ast_types::{Definition, FnDef, FunctionReference, Module, StructDef, Type, TypeReference, UseMap, VarDef, VarReference};
 
 pub fn parse_tokens(tokens: Vec<Token>) -> ParseResult<Module> {
     let mut parser = Parser::new(tokens);
@@ -98,7 +101,10 @@ impl Parser {
                     break;
                 }
                 _ => {
-                    return Err(ParseError::Unexpected(self.get_token().clone(), "Cannot be used for top level".to_string()));
+                    return Err(ParseError::Unexpected(
+                        self.get_token().clone(),
+                        "Cannot be used for top level".to_string(),
+                    ));
                 }
             }
         }
@@ -111,7 +117,12 @@ impl Parser {
             TokenKind::TVoid => Type::Void,
             TokenKind::TInt => Type::Int,
             TokenKind::Ident(ident) => Type::Struct(TypeReference::new(ident.clone())),
-            _ => return Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string())),
+            _ => {
+                return Err(ParseError::Unexpected(
+                    self.get_token().clone(),
+                    "Expected ident".to_string(),
+                ))
+            }
         })
     }
 
@@ -142,7 +153,10 @@ impl Parser {
                         break;
                     }
                 } else {
-                    return Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()));
+                    return Err(ParseError::Unexpected(
+                        self.get_token().clone(),
+                        "Expected ident".to_string(),
+                    ));
                 }
             }
 
@@ -160,7 +174,10 @@ impl Parser {
                 args,
             })
         } else {
-            Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()))
+            Err(ParseError::Unexpected(
+                self.get_token().clone(),
+                "Expected ident".to_string(),
+            ))
         }
     }
 
@@ -189,7 +206,10 @@ impl Parser {
                         break;
                     }
                 } else {
-                    return Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()));
+                    return Err(ParseError::Unexpected(
+                        self.get_token().clone(),
+                        "Expected ident".to_string(),
+                    ));
                 }
             }
 
@@ -199,7 +219,10 @@ impl Parser {
                 field_types,
             })
         } else {
-            Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()))
+            Err(ParseError::Unexpected(
+                self.get_token().clone(),
+                "Expected ident".to_string(),
+            ))
         }
     }
 
@@ -218,7 +241,10 @@ impl Parser {
                 ty,
             })
         } else {
-            Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()))
+            Err(ParseError::Unexpected(
+                self.get_token().clone(),
+                "Expected ident".to_string(),
+            ))
         }
     }
 
@@ -248,8 +274,13 @@ impl Parser {
                     }
                     TokenKind::LBrace => {
                         loop {
-                            if let TokenKind::Ident(ident) = self.eat(&TokenKind::Ident("".to_string()))? {
-                                res.push((ident.clone(), (package_name.clone(), path.clone(), ident.clone())));
+                            if let TokenKind::Ident(ident) =
+                                self.eat(&TokenKind::Ident("".to_string()))?
+                            {
+                                res.push((
+                                    ident.clone(),
+                                    (package_name.clone(), path.clone(), ident.clone()),
+                                ));
                                 if self.eat(&TokenKind::Comma).is_err() {
                                     break;
                                 }
@@ -261,7 +292,10 @@ impl Parser {
                         break;
                     }
                     _ => {
-                        return Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident or ::".to_string()));
+                        return Err(ParseError::Unexpected(
+                            self.get_token().clone(),
+                            "Expected ident or ::".to_string(),
+                        ));
                     }
                 }
             }
@@ -269,7 +303,10 @@ impl Parser {
             self.eat(&TokenKind::SemiColon)?;
             Ok(res)
         } else {
-            Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()))
+            Err(ParseError::Unexpected(
+                self.get_token().clone(),
+                "Expected ident".to_string(),
+            ))
         }
     }
 }
@@ -316,14 +353,8 @@ mod tests {
             &TokenKind::Ident("c".to_string())
         );
 
-        assert_eq!(
-            parser.eat(&TokenKind::Eof).unwrap(),
-            &TokenKind::Eof
-        );
+        assert_eq!(parser.eat(&TokenKind::Eof).unwrap(), &TokenKind::Eof);
 
-        assert_eq!(
-            parser.eat(&TokenKind::Eof).unwrap(),
-            &TokenKind::Eof
-        );
+        assert_eq!(parser.eat(&TokenKind::Eof).unwrap(), &TokenKind::Eof);
     }
 }

@@ -34,7 +34,9 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
         path: &Utf8PathBuf,
         is_root: bool,
     ) -> ModuleBuildResult<()> {
-        self.module_graph.package_map.insert(package_name.to_string(), path.clone());
+        self.module_graph
+            .package_map
+            .insert(package_name.to_string(), path.clone());
 
         let mut queue = VecDeque::from([path.clone()]);
 
@@ -74,7 +76,12 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
     pub fn load_module_bodies(&mut self) -> ModuleBuildResult<()> {
         for node in self.module_graph.nodes.values_mut() {
             let rel_path = node.rel_path.clone();
-            let abs_path = self.module_graph.package_map.get(&node.package_name).unwrap().join(&rel_path);
+            let abs_path = self
+                .module_graph
+                .package_map
+                .get(&node.package_name)
+                .unwrap()
+                .join(&rel_path);
 
             let age = self
                 .build_cache
@@ -82,7 +89,10 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                 .get_file_age(&abs_path)
                 .or(Err(ModuleBuildError::FileNoLongerExists))?;
 
-            if let Some(&ref body) = self.build_cache.get_module(&module_id_from_local(&node.package_name, &rel_path)) {
+            if let Some(&ref body) = self
+                .build_cache
+                .get_module(&module_id_from_local(&node.package_name, &rel_path))
+            {
                 if body.read_on == age {
                     node.body = Some(body.clone());
                     continue;

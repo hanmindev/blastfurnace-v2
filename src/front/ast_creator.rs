@@ -2,8 +2,8 @@ use crate::front::ast_creator::lexer::get_tokens;
 use crate::front::ast_types::Module;
 
 mod lexer;
-mod token_types;
 mod parser;
+mod token_types;
 
 fn create_ast(src: &str) -> Module {
     // TODO: error handling
@@ -16,9 +16,12 @@ fn create_ast(src: &str) -> Module {
 #[cfg(test)]
 mod tests {
     use crate::front::ast_creator::create_ast;
-    use crate::front::ast_types::{Definition, FnDef, FunctionReference, Module, StructDef, Type, TypeReference, UseMap, VarDef, VarReference};
-    use std::collections::HashMap;
+    use crate::front::ast_types::{
+        Definition, FnDef, FunctionReference, Module, StructDef, Type, TypeReference, UseMap,
+        VarDef, VarReference,
+    };
     use camino::Utf8PathBuf;
+    use std::collections::HashMap;
 
     #[test]
     fn test_create_ast_use() {
@@ -31,12 +34,47 @@ mod tests {
         let expected_ast = Module {
             use_map: UseMap {
                 uses: HashMap::from([
-                    ("struct_a".to_string(), ("root".to_string(), Utf8PathBuf::from(""), "struct_a".to_string())),
-                    ("struct_b".to_string(), ("root".to_string(), Utf8PathBuf::from("path\\path2"), "struct_b".to_string())),
-                    ("struct_c".to_string(), ("root".to_string(), Utf8PathBuf::from("path\\path2"), "struct_c".to_string())),
-                    ("struct_d".to_string(), ("package_a".to_string(), Utf8PathBuf::from("path\\path2"), "struct_d".to_string())),
-                    ("struct_e".to_string(), ("package_a".to_string(), Utf8PathBuf::from("path\\path2"), "struct_e".to_string())),
-                ])
+                    (
+                        "struct_a".to_string(),
+                        (
+                            "root".to_string(),
+                            Utf8PathBuf::from(""),
+                            "struct_a".to_string(),
+                        ),
+                    ),
+                    (
+                        "struct_b".to_string(),
+                        (
+                            "root".to_string(),
+                            Utf8PathBuf::from("path\\path2"),
+                            "struct_b".to_string(),
+                        ),
+                    ),
+                    (
+                        "struct_c".to_string(),
+                        (
+                            "root".to_string(),
+                            Utf8PathBuf::from("path\\path2"),
+                            "struct_c".to_string(),
+                        ),
+                    ),
+                    (
+                        "struct_d".to_string(),
+                        (
+                            "package_a".to_string(),
+                            Utf8PathBuf::from("path\\path2"),
+                            "struct_d".to_string(),
+                        ),
+                    ),
+                    (
+                        "struct_e".to_string(),
+                        (
+                            "package_a".to_string(),
+                            Utf8PathBuf::from("path\\path2"),
+                            "struct_e".to_string(),
+                        ),
+                    ),
+                ]),
             },
             definitions: vec![],
         };
@@ -58,17 +96,18 @@ mod tests {
             use_map: UseMap {
                 uses: HashMap::new(),
             },
-            definitions: vec![
-                Definition::StructDef(StructDef {
-                    name: TypeReference::new("struct_a".to_string()),
-                    field_types: {
-                        let mut field_types = HashMap::new();
-                        field_types.insert("field_a".to_string(), Type::Int);
-                        field_types.insert("field_b".to_string(), Type::Struct(TypeReference::new("struct_b".to_string())));
-                        field_types
-                    },
-                }),
-            ],
+            definitions: vec![Definition::StructDef(StructDef {
+                name: TypeReference::new("struct_a".to_string()),
+                field_types: {
+                    let mut field_types = HashMap::new();
+                    field_types.insert("field_a".to_string(), Type::Int);
+                    field_types.insert(
+                        "field_b".to_string(),
+                        Type::Struct(TypeReference::new("struct_b".to_string())),
+                    );
+                    field_types
+                },
+            })],
         };
 
         let ast = create_ast(src);
@@ -85,12 +124,10 @@ mod tests {
             use_map: UseMap {
                 uses: HashMap::new(),
             },
-            definitions: vec![
-                Definition::VarDef(VarDef {
-                    name: VarReference::new("val".to_string()),
-                    ty: Type::Int,
-                }),
-            ],
+            definitions: vec![Definition::VarDef(VarDef {
+                name: VarReference::new("val".to_string()),
+                ty: Type::Int,
+            })],
         };
     }
 
@@ -105,22 +142,20 @@ mod tests {
             use_map: UseMap {
                 uses: HashMap::new(),
             },
-            definitions: vec![
-                Definition::FnDef(FnDef {
-                    return_type: Type::Struct(TypeReference::new("struct_c".to_string())),
-                    name: FunctionReference::new("fn_a".to_string()),
-                    args: vec![
-                        VarDef {
-                            name: VarReference::new("arg_a".to_string()),
-                            ty: Type::Int,
-                        },
-                        VarDef {
-                            name: VarReference::new("arg_b".to_string()),
-                            ty: Type::Struct(TypeReference::new("struct_b".to_string())),
-                        },
-                    ],
-                }),
-            ],
+            definitions: vec![Definition::FnDef(FnDef {
+                return_type: Type::Struct(TypeReference::new("struct_c".to_string())),
+                name: FunctionReference::new("fn_a".to_string()),
+                args: vec![
+                    VarDef {
+                        name: VarReference::new("arg_a".to_string()),
+                        ty: Type::Int,
+                    },
+                    VarDef {
+                        name: VarReference::new("arg_b".to_string()),
+                        ty: Type::Struct(TypeReference::new("struct_b".to_string())),
+                    },
+                ],
+            })],
         };
 
         let ast = create_ast(src);
