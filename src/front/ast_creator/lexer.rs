@@ -141,6 +141,10 @@ impl<'src> Lexer<'src> {
                 self.eat();
                 return Ok(TokenKind::DoubleColon);
             }
+            ('-', '>') => {
+                self.eat();
+                return Ok(TokenKind::Arrow);
+            }
             _ => {}
         }
 
@@ -152,6 +156,9 @@ impl<'src> Lexer<'src> {
 
             '{' => TokenKind::LBrace,
             '}' => TokenKind::RBrace,
+
+            '(' => TokenKind::LParen,
+            ')' => TokenKind::RParen,
             _ => return Err(TokenError::InvalidToken(format!("{}", prev))),
         })
     }

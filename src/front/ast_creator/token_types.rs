@@ -26,6 +26,10 @@ pub enum TokenKind {
 
     LBrace,
     RBrace,
+    LParen,
+    RParen,
+
+    Arrow,
 
     Eof,
 }

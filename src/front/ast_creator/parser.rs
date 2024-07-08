@@ -1,8 +1,9 @@
 use std::cmp::min;
+use std::collections::HashMap;
 use std::mem;
 use camino::Utf8PathBuf;
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
-use crate::front::ast_types::{Definition, FnDef, Module, StructDef, UseMap, VarDef};
+use crate::front::ast_types::{Definition, FnDef, FunctionReference, Module, StructDef, Type, TypeReference, UseMap, VarDef, VarReference};
 use crate::modules::ModuleId;
 
 #[derive(Debug)]
@@ -88,7 +89,7 @@ impl Parser {
                     module.definitions.push(Definition::StructDef(definition));
                 }
                 TokenKind::Static => {
-                    let definition = self.parse_var_definition()?;
+                    let definition = self.parse_static_var_definition()?;
                     module.definitions.push(Definition::VarDef(definition));
                 }
                 TokenKind::Eof => {
@@ -103,16 +104,124 @@ impl Parser {
         Ok(module)
     }
 
+    fn parse_type(&mut self) -> ParseResult<Type> {
+        match self.eat_any() {
+            TokenKind::Ident(ident) => {
+                Ok(match ident.as_str() {
+                    "void" => Type::Void,
+                    "int" => Type::Int,
+                    "float" => Type::Float,
+                    "bool" => Type::Bool,
+                    "string" => Type::String,
+                    _ => Type::Struct(TypeReference::new(ident.clone())),
+                })
+            }
+            _ => Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string())),
+        }
+    }
+
     fn parse_fn_definition(&mut self) -> ParseResult<FnDef> {
-        unimplemented!()
+        self.eat(&TokenKind::Fn)?;
+        if let TokenKind::Ident(fn_name) = self.eat_any() {
+            let fn_name = fn_name.clone();
+
+            self.eat(&TokenKind::LParen)?;
+            let mut args = vec![];
+            loop {
+                if self.peek(0) == &TokenKind::RParen {
+                    break;
+                }
+
+                if let TokenKind::Ident(arg_name) = self.eat_any() {
+                    let arg_name = arg_name.clone();
+
+                    self.eat(&TokenKind::Colon)?;
+                    let ty = self.parse_type()?;
+
+                    args.push(VarDef {
+                        name: VarReference::new(arg_name),
+                        ty,
+                    });
+
+                    if self.eat(&TokenKind::Comma).is_err() {
+                        break;
+                    }
+                } else {
+                    return Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()));
+                }
+            }
+
+            self.eat(&TokenKind::RParen)?;
+            self.eat(&TokenKind::Arrow)?;
+            let return_type = self.parse_type()?;
+
+            self.eat(&TokenKind::SemiColon)?;
+            Ok(FnDef {
+                return_type,
+                name: FunctionReference::new(fn_name),
+                args,
+            })
+        } else {
+            Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()))
+        }
     }
 
     fn parse_struct_definition(&mut self) -> ParseResult<StructDef> {
-        unimplemented!()
+        self.eat(&TokenKind::Struct)?;
+        if let TokenKind::Ident(struct_name) = self.eat_any() {
+            let struct_name = struct_name.clone();
+
+            let mut field_types = HashMap::new();
+
+            self.eat(&TokenKind::LBrace)?;
+            loop {
+                if self.peek(0) == &TokenKind::RBrace {
+                    break;
+                }
+
+                if let TokenKind::Ident(field_name) = self.eat_any() {
+                    let field_name = field_name.clone();
+
+                    self.eat(&TokenKind::Colon)?;
+                    let ty = self.parse_type()?;
+
+                    field_types.insert(field_name, ty);
+
+                    if self.eat(&TokenKind::Comma).is_err() {
+                        break;
+                    }
+                } else {
+                    return Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()));
+                }
+            }
+
+            self.eat(&TokenKind::RBrace)?;
+            Ok(StructDef {
+                name: TypeReference::new(struct_name),
+                field_types,
+            })
+        } else {
+            Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()))
+        }
     }
 
-    fn parse_var_definition(&mut self) -> ParseResult<VarDef> {
-        unimplemented!()
+    fn parse_static_var_definition(&mut self) -> ParseResult<VarDef> {
+        self.eat(&TokenKind::Static)?;
+        if let TokenKind::Ident(variable_name) = self.eat_any() {
+            let variable_name = variable_name.clone();
+
+            // TODO: currently no type inference, so type is required
+            self.eat(&TokenKind::Colon)?;
+            let ty = self.parse_type()?;
+
+            self.eat(&TokenKind::SemiColon)?;
+            Ok(VarDef {
+                name: VarReference::new(variable_name),
+                ty,
+            })
+        } else {
+            Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()))
+        }
     }
 
     // maps
