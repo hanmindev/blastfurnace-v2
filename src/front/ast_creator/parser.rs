@@ -4,10 +4,13 @@ use std::mem;
 use camino::Utf8PathBuf;
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
 use crate::front::ast_types::{Definition, FnDef, FunctionReference, Module, StructDef, Type, TypeReference, UseMap, VarDef, VarReference};
-use crate::modules::ModuleId;
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+pub fn parse_tokens(tokens: Vec<Token>) -> ParseResult<Module> {
+    let mut parser = Parser::new(tokens);
+    parser.parse_top_level()
+}
+
+#[derive(Debug, PartialEq)]
 pub enum ParseError {
     Unexpected(Token, String),
     Unknown,
@@ -15,7 +18,7 @@ pub enum ParseError {
 
 pub type ParseResult<T> = Result<T, ParseError>;
 
-pub struct Parser {
+struct Parser {
     tokens: Vec<Token>,
 
     curr_index: usize,
@@ -62,9 +65,8 @@ impl Parser {
         &self.tokens[min(self.curr_index + offset, self.tokens.len() - 1)].kind
     }
 
-    fn parse_top_level(&mut self, id: &ModuleId) -> ParseResult<Module> {
+    fn parse_top_level(&mut self) -> ParseResult<Module> {
         let mut module = Module {
-            id: id.clone(),
             use_map: UseMap {
                 uses: Default::default(),
             },
