@@ -3,7 +3,7 @@ use std::io::Read;
 use std::str::CharIndices;
 use crate::front::ast_creator::token_types::{Span, Token, TokenError, TokenKind};
 
-fn get_tokens(src: &str) -> Result<Vec<Token>, Vec<TokenError>> {
+pub fn get_tokens(src: &str) -> Result<Vec<Token>, Vec<TokenError>> {
     let mut lexer = Lexer::new(src);
     let mut tokens = Vec::new();
     let mut errors = Vec::new();
