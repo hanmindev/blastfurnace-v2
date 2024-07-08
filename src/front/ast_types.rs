@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Debug;
 use std::marker::PhantomData;
+use camino::Utf8PathBuf;
 
 // Reference<T, R> type idea from https://thume.ca/2019/04/18/writing-a-compiler-in-rust/
 #[derive(PartialEq, Clone, Serialize, Deserialize)]
@@ -79,4 +80,16 @@ pub enum Definition {
     VarDef(VarDef),
     StructDef(StructDef),
     FnDef(FnDef),
+}
+
+pub struct UseMap {
+    // map from alias to (package name, path, name in module)
+    pub uses: HashMap<String, (String, Utf8PathBuf, String)>,
+}
+
+pub struct Module {
+    pub id: ModuleId,
+
+    pub use_map: UseMap,
+    pub definitions: Vec<Definition>,
 }

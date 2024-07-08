@@ -1,5 +1,9 @@
+use std::cmp::min;
 use std::mem;
+use camino::Utf8PathBuf;
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
+use crate::front::ast_types::{Definition, FnDef, Module, StructDef, UseMap, VarDef};
+use crate::modules::ModuleId;
 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -25,14 +29,26 @@ impl Parser {
         parser
     }
 
-    fn eat(&mut self, type_: &TokenKind) -> ParseResult<&Token> {
+    fn get_token(&self) -> &Token {
+        &self.tokens[self.curr_index]
+    }
+
+    fn eat_any(&mut self) -> &TokenKind {
+        let old_token = &self.tokens[self.curr_index].kind;
+        if self.curr_index < self.tokens.len() - 1 {
+            self.curr_index += 1;
+        }
+        old_token
+    }
+
+    fn eat(&mut self, type_: &TokenKind) -> ParseResult<&TokenKind> {
         let old_token = &self.tokens[self.curr_index];
         // return old token kind, set new token
         if mem::discriminant(&old_token.kind) == mem::discriminant(&type_) {
             if self.curr_index < self.tokens.len() - 1 {
                 self.curr_index += 1;
             }
-            return Ok(old_token);
+            return Ok(&old_token.kind);
         } else {
             Err(ParseError::Unexpected(
                 old_token.clone(),
@@ -40,12 +56,117 @@ impl Parser {
             ))
         }
     }
+
+    fn peek(&self, offset: usize) -> &TokenKind {
+        &self.tokens[min(self.curr_index + offset, self.tokens.len() - 1)].kind
+    }
+
+    fn parse_top_level(&mut self, id: &ModuleId) -> ParseResult<Module> {
+        let mut module = Module {
+            id: id.clone(),
+            use_map: UseMap {
+                uses: Default::default(),
+            },
+            definitions: vec![],
+        };
+
+        loop {
+            match self.peek(0) {
+                TokenKind::Use => {
+                    let vec = self.parse_use()?;
+
+                    for (key, (id, value, name)) in vec {
+                        module.use_map.uses.insert(key, (id.clone(), value, name));
+                    }
+                }
+                TokenKind::Fn => {
+                    let definition = self.parse_fn_definition()?;
+                    module.definitions.push(Definition::FnDef(definition));
+                }
+                TokenKind::Struct => {
+                    let definition = self.parse_struct_definition()?;
+                    module.definitions.push(Definition::StructDef(definition));
+                }
+                TokenKind::Static => {
+                    let definition = self.parse_var_definition()?;
+                    module.definitions.push(Definition::VarDef(definition));
+                }
+                TokenKind::Eof => {
+                    break;
+                }
+                _ => {
+                    return Err(ParseError::Unexpected(self.get_token().clone(), "Cannot be used for top level".to_string()));
+                }
+            }
+        }
+
+        Ok(module)
+    }
+
+    fn parse_fn_definition(&mut self) -> ParseResult<FnDef> {
+        unimplemented!()
+    }
+
+    fn parse_struct_definition(&mut self) -> ParseResult<StructDef> {
+        unimplemented!()
+    }
+
+    fn parse_var_definition(&mut self) -> ParseResult<VarDef> {
+        unimplemented!()
+    }
+
+    // maps
+    fn parse_use(&mut self) -> ParseResult<Vec<(String, (String, Utf8PathBuf, String))>> {
+        self.eat(&TokenKind::Use)?;
+
+        if let TokenKind::Ident(package_name) = self.eat_any() {
+            let package_name = package_name.clone();
+
+            let mut res = vec![];
+
+            let mut path = Utf8PathBuf::new();
+
+            loop {
+                match self.eat_any() {
+                    TokenKind::Ident(ident) => {
+                        let ident = ident.clone();
+                        if self.peek(0) == &TokenKind::SemiColon {
+                            res.push((ident.clone(), (package_name.clone(), path, ident)));
+                            break;
+                        } else {
+                            path.push(ident);
+                        }
+                    }
+                    TokenKind::LBrace => {
+                        loop {
+                            if let TokenKind::Ident(ident) = self.eat(&TokenKind::Ident("".to_string()))? {
+                                res.push((ident.clone(), (package_name.clone(), path.clone(), ident.clone())));
+                                if self.eat(&TokenKind::Comma).is_err() {
+                                    break;
+                                }
+                            } else {
+                                panic!("Can't happen");
+                            }
+                        }
+                        self.eat(&TokenKind::RBrace)?;
+                    }
+                    _ => {
+                        return Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident or ::".to_string()));
+                    }
+                }
+            }
+
+            self.eat(&TokenKind::SemiColon)?;
+            Ok(res)
+        } else {
+            Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string()))
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
 
     #[test]
     fn test_parser_eat() {
@@ -71,28 +192,28 @@ mod tests {
         let mut parser = Parser::new(tokens);
 
         assert_eq!(
-            parser.eat(&TokenKind::Ident("a".to_string())).unwrap().kind,
-            TokenKind::Ident("a".to_string())
+            parser.eat(&TokenKind::Ident("a".to_string())).unwrap(),
+            &TokenKind::Ident("a".to_string())
         );
 
         assert_eq!(
-            parser.eat(&TokenKind::Ident("b".to_string())).unwrap().kind,
-            TokenKind::Ident("b".to_string())
+            parser.eat(&TokenKind::Ident("b".to_string())).unwrap(),
+            &TokenKind::Ident("b".to_string())
         );
 
         assert_eq!(
-            parser.eat(&TokenKind::Ident("c".to_string())).unwrap().kind,
-            TokenKind::Ident("c".to_string())
+            parser.eat(&TokenKind::Ident("c".to_string())).unwrap(),
+            &TokenKind::Ident("c".to_string())
         );
 
         assert_eq!(
-            parser.eat(&TokenKind::Eof).unwrap().kind,
-            TokenKind::Eof
+            parser.eat(&TokenKind::Eof).unwrap(),
+            &TokenKind::Eof
         );
 
         assert_eq!(
-            parser.eat(&TokenKind::Eof).unwrap().kind,
-            TokenKind::Eof
+            parser.eat(&TokenKind::Eof).unwrap(),
+            &TokenKind::Eof
         );
     }
 }
