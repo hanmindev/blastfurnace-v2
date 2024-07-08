@@ -88,8 +88,6 @@ pub struct UseMap {
 }
 
 pub struct Module {
-    pub id: ModuleId,
-
     pub use_map: UseMap,
     pub definitions: Vec<Definition>,
 }
