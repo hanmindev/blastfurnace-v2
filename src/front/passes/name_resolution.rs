@@ -1,11 +1,6 @@
 use crate::front::ast_types::{ASTFile, Definition};
-use crate::front::DefinitionMap;
-use crate::front::passes::name_resolution::scope_table::{ScopeTable, SymbolType};
 use crate::front::passes::visitor::Visitable;
 use crate::modules::{module_id_from_local, ModuleId};
-
-mod scope_table;
-mod visitor;
 
 #[derive(Debug, PartialEq)]
 pub enum NameResolutionError {
@@ -15,28 +10,22 @@ pub enum NameResolutionError {
 
 pub struct NameResolver {
     module_id: ModuleId,
-    scope_table: ScopeTable,
 }
 impl NameResolver {
     pub fn run(
-        module_id: ModuleId,
-        mut astfile: &mut ASTFile,
+        module_id: ModuleId, // id of the module we are resolving names for
+        mut astfile: &mut ASTFile, // the ASTFile containing the definitions
     ) -> Result<(), NameResolutionError> {
         let mut name_resolver = NameResolver {
             module_id,
-            scope_table: ScopeTable::new(),
         };
 
+        // load the "use" statements into the scope table. There should not be any duplicates
         for (key, (package_name, path, name)) in astfile.use_map.uses.iter() {
             let import_module_id = module_id_from_local(package_name, path);
-
-            // TODO: need to handle errors, also I don't like how we are binding all three
-            name_resolver.scope_table.scope_bind(&import_module_id, key, SymbolType::Var).unwrap();
-            name_resolver.scope_table.scope_bind(&import_module_id, key, SymbolType::Fn).unwrap();
-            name_resolver.scope_table.scope_bind(&import_module_id, key, SymbolType::Struct).unwrap();
         }
 
-
+        // then we visit each definition in the ASTFile
         for definition in astfile.definitions.iter_mut() {
             definition.visit(&mut name_resolver)?;
         }
