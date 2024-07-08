@@ -82,11 +82,13 @@ pub enum Definition {
     FnDef(FnDef),
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct UseMap {
     // map from alias to (package name, path, name in module)
     pub uses: HashMap<String, (String, Utf8PathBuf, String)>,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Module {
     pub use_map: UseMap,
     pub definitions: Vec<Definition>,
