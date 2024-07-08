@@ -107,19 +107,12 @@ impl Parser {
     }
 
     fn parse_type(&mut self) -> ParseResult<Type> {
-        match self.eat_any() {
-            TokenKind::Ident(ident) => {
-                Ok(match ident.as_str() {
-                    "void" => Type::Void,
-                    "int" => Type::Int,
-                    "float" => Type::Float,
-                    "bool" => Type::Bool,
-                    "string" => Type::String,
-                    _ => Type::Struct(TypeReference::new(ident.clone())),
-                })
-            }
-            _ => Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string())),
-        }
+        Ok(match self.eat_any() {
+            TokenKind::TVoid => Type::Void,
+            TokenKind::TInt => Type::Int,
+            TokenKind::Ident(ident) => Type::Struct(TypeReference::new(ident.clone())),
+            _ => return Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident".to_string())),
+        })
     }
 
     fn parse_fn_definition(&mut self) -> ParseResult<FnDef> {
@@ -157,7 +150,10 @@ impl Parser {
             self.eat(&TokenKind::Arrow)?;
             let return_type = self.parse_type()?;
 
-            self.eat(&TokenKind::SemiColon)?;
+            // TODO: parse body
+            self.eat(&TokenKind::LBrace)?;
+            self.eat(&TokenKind::RBrace)?;
+
             Ok(FnDef {
                 return_type,
                 name: FunctionReference::new(fn_name),
@@ -236,6 +232,7 @@ impl Parser {
             let mut res = vec![];
 
             let mut path = Utf8PathBuf::new();
+            self.eat(&TokenKind::DoubleColon)?;
 
             loop {
                 match self.eat_any() {
@@ -246,6 +243,7 @@ impl Parser {
                             break;
                         } else {
                             path.push(ident);
+                            self.eat(&TokenKind::DoubleColon)?;
                         }
                     }
                     TokenKind::LBrace => {
@@ -260,6 +258,7 @@ impl Parser {
                             }
                         }
                         self.eat(&TokenKind::RBrace)?;
+                        break;
                     }
                     _ => {
                         return Err(ParseError::Unexpected(self.get_token().clone(), "Expected ident or ::".to_string()));
