@@ -1,16 +1,14 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
-use crate::front::ast_types::{
-    Definition, FnDef, FunctionReference, ASTFile, StructDef, Type, TypeReference, UseMap, VarDef,
-    VarReference,
-};
+use crate::front::ast_types::{Definition, FnDef, FunctionReference, ASTFile, StructDef, Type, TypeReference, VarDef, VarReference, RawName, ResolvedName};
 use camino::Utf8PathBuf;
 use std::cmp::min;
 use std::collections::HashMap;
 use std::mem;
+use crate::modules::module_id_from_local;
 
-pub fn parse_tokens(tokens: Vec<Token>) -> ParseResult<ASTFile> {
+pub fn parse_tokens(package_name: &str, tokens: Vec<Token>) -> ParseResult<ASTFile> {
     let mut parser = Parser::new(tokens);
-    parser.parse_top_level()
+    parser.parse_top_level(package_name)
 }
 
 #[derive(Debug, PartialEq)]
@@ -68,22 +66,16 @@ impl Parser {
         &self.tokens[min(self.curr_index + offset, self.tokens.len() - 1)].kind
     }
 
-    fn parse_top_level(&mut self) -> ParseResult<ASTFile> {
+    fn parse_top_level(&mut self, package_name: &str) -> ParseResult<ASTFile> {
         let mut module = ASTFile {
-            use_map: UseMap {
-                uses: Default::default(),
-            },
+            uses: Default::default(),
             definitions: Default::default(),
         };
 
         loop {
             match self.peek(0) {
                 TokenKind::Use => {
-                    let vec = self.parse_use()?;
-
-                    for (key, (id, value, name)) in vec {
-                        module.use_map.uses.insert(key, (id.clone(), value, name));
-                    }
+                    module.uses.extend(self.parse_use(package_name)?);
                 }
                 TokenKind::Fn => {
                     let definition = self.parse_fn_definition()?;
@@ -249,11 +241,15 @@ impl Parser {
     }
 
     // maps
-    fn parse_use(&mut self) -> ParseResult<Vec<(String, (String, Utf8PathBuf, String))>> {
+    fn parse_use(&mut self, package_name: &str) -> ParseResult<Vec<(RawName, ResolvedName)>> {
         self.eat(&TokenKind::Use)?;
 
-        if let TokenKind::Ident(package_name) = self.eat_any() {
-            let package_name = package_name.clone();
+        if let TokenKind::Ident(use_package_name) = self.eat_any() {
+            let package_name = if use_package_name == "root" {
+                package_name.to_string()
+            } else {
+                use_package_name.clone()
+            };
 
             let mut res = vec![];
 
@@ -265,7 +261,7 @@ impl Parser {
                     TokenKind::Ident(ident) => {
                         let ident = ident.clone();
                         if self.peek(0) == &TokenKind::SemiColon {
-                            res.push((ident.clone(), (package_name.clone(), path, ident)));
+                            res.push((ident.clone(), (module_id_from_local(&package_name, &path), ident.clone())));
                             break;
                         } else {
                             path.push(ident);
@@ -279,7 +275,7 @@ impl Parser {
                             {
                                 res.push((
                                     ident.clone(),
-                                    (package_name.clone(), path.clone(), ident.clone()),
+                                    (module_id_from_local(&package_name, &path), ident.clone())
                                 ));
                                 if self.eat(&TokenKind::Comma).is_err() {
                                     break;

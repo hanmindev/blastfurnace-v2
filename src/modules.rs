@@ -112,7 +112,7 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                 let mut file_content = String::new();
                 reader.read_to_string(&mut file_content).or(Err(ModuleBuildError::FileReadError))?;
 
-                let (direct_deps, definitions) = parse_file(module_id, &file_content);
+                let (direct_deps, definitions) = parse_file(&node.package_name, module_id, &file_content);
 
                 Some(ModuleCachableData {
                     read_on: age,

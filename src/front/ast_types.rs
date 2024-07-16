@@ -86,13 +86,7 @@ pub enum Definition {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct UseMap {
-    // map from alias to (package name, path, name in module)
-    pub uses: HashMap<String, (String, Utf8PathBuf, String)>,
-}
-
-#[derive(Debug, PartialEq, Clone)]
 pub struct ASTFile {
-    pub use_map: UseMap,
+    pub uses: Vec<(RawName, ResolvedName)>,
     pub definitions: Vec<Definition>,
 }
