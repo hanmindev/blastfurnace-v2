@@ -1,11 +1,11 @@
 use crate::front::ast_creator::lexer::get_tokens;
-use crate::front::ast_types::ASTFile;
+use crate::front::ast_types::Module;
 
 mod lexer;
 mod parser;
 mod token_types;
 
-pub fn create_ast(file_root_package_name: &str, src: &str) -> ASTFile {
+pub fn create_ast(file_root_package_name: &str, src: &str) -> Module {
     // TODO: error handling
     let tokens = get_tokens(src).unwrap();
     let ast = parser::parse_tokens(file_root_package_name, tokens).unwrap();
@@ -17,8 +17,8 @@ pub fn create_ast(file_root_package_name: &str, src: &str) -> ASTFile {
 mod tests {
     use crate::front::ast_creator::create_ast;
     use crate::front::ast_types::{
-        ASTFile, Definition, FnDef, FunctionReference, StructDef, Type, TypeReference, VarDef,
-        VarReference,
+        Definition, FnDef, FunctionReference, Module, StaticVarDef, StructDef, Type, TypeReference,
+        VarDef, VarReference,
     };
     use camino::Utf8PathBuf;
     use std::collections::HashMap;
@@ -56,7 +56,7 @@ mod tests {
         ];
 
         let ast = create_ast(current_package, src);
-        assert_eq!(uses, ast.uses);
+        assert_eq!(uses, ast.uses.unwrap());
     }
 
     #[test]
@@ -70,8 +70,8 @@ mod tests {
         }
         "#;
 
-        let expected = ASTFile {
-            uses: vec![],
+        let expected = Module {
+            uses: Some(vec![]),
             definitions: vec![Definition::StructDef(StructDef {
                 name: TypeReference::new("struct_a".to_string()),
                 field_types: {
@@ -97,11 +97,36 @@ mod tests {
         static val: int;
         "#;
 
-        let expected_ast = ASTFile {
-            uses: vec![],
-            definitions: vec![Definition::VarDef(VarDef {
+        let expected_ast = Module {
+            uses: Some(vec![]),
+            definitions: vec![Definition::StaticVarDef(StaticVarDef {
                 name: VarReference::new("val".to_string()),
                 ty: Type::Int,
+            })],
+        };
+
+        let ast = create_ast(current_package, src);
+        assert_eq!(expected_ast, ast);
+    }
+
+    #[test]
+    fn test_create_ast_void_fn() {
+        let current_package = "package_a";
+        let src = r#"
+        fn fn_a() {
+        }
+        "#;
+
+        let expected_ast = Module {
+            uses: Some(vec![]),
+            definitions: vec![Definition::FnDef(FnDef {
+                return_type: Type::Void,
+                name: FunctionReference::new("fn_a".to_string()),
+                args: vec![],
+                body: Module {
+                    uses: Some(vec![]),
+                    definitions: vec![],
+                },
             })],
         };
 
@@ -117,8 +142,8 @@ mod tests {
         }
         "#;
 
-        let expected_ast = ASTFile {
-            uses: vec![],
+        let expected_ast = Module {
+            uses: Some(vec![]),
             definitions: vec![Definition::FnDef(FnDef {
                 return_type: Type::Struct(TypeReference::new("struct_c".to_string())),
                 name: FunctionReference::new("fn_a".to_string()),
@@ -132,6 +157,84 @@ mod tests {
                         ty: Type::Struct(TypeReference::new("struct_b".to_string())),
                     },
                 ],
+                body: Module {
+                    uses: Some(vec![]),
+                    definitions: vec![],
+                },
+            })],
+        };
+
+        let ast = create_ast(current_package, src);
+        assert_eq!(expected_ast, ast);
+    }
+
+    #[test]
+    fn test_create_ast_scope_intermediate() {
+        let current_package = "package_a";
+        let src = r#"
+        fn fn_a() {
+        {}
+        }
+        "#;
+
+        let expected_ast = Module {
+            uses: Some(vec![]),
+            definitions: vec![Definition::FnDef(FnDef {
+                return_type: Type::Void,
+                name: FunctionReference::new("fn_a".to_string()),
+                args: vec![],
+                body: Module {
+                    uses: Some(vec![]),
+                    definitions: vec![Definition::Scope(Module {
+                        uses: Some(vec![]),
+                        definitions: vec![],
+                    })],
+                },
+            })],
+        };
+
+        let ast = create_ast(current_package, src);
+        assert_eq!(expected_ast, ast);
+    }
+
+    #[test]
+    fn test_create_ast_layered_definition() {
+        let current_package = "package_a";
+        let src = r#"
+        fn fn_a() {
+        {
+        struct struct_a {
+            field_a: int,
+            field_b: struct_b,
+        }
+        }
+        }
+        "#;
+
+        let expected_ast = Module {
+            uses: Some(vec![]),
+            definitions: vec![Definition::FnDef(FnDef {
+                return_type: Type::Void,
+                name: FunctionReference::new("fn_a".to_string()),
+                args: vec![],
+                body: Module {
+                    uses: Some(vec![]),
+                    definitions: vec![Definition::Scope(Module {
+                        uses: Some(vec![]),
+                        definitions: vec![Definition::StructDef(StructDef {
+                            name: TypeReference::new("struct_a".to_string()),
+                            field_types: {
+                                let mut field_types = HashMap::new();
+                                field_types.insert("field_a".to_string(), Type::Int);
+                                field_types.insert(
+                                    "field_b".to_string(),
+                                    Type::Struct(TypeReference::new("struct_b".to_string())),
+                                );
+                                field_types
+                            },
+                        })],
+                    })],
+                },
             })],
         };
 

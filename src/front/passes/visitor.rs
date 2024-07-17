@@ -1,6 +1,6 @@
 use crate::front::ast_types::{
-    Definition, FnDef, FunctionReference, StaticVarDef, StructDef, Type, TypeReference, VarDef,
-    VarReference,
+    Definition, FnDef, FunctionReference, Module, StaticVarDef, StructDef, Type, TypeReference,
+    VarDef, VarReference,
 };
 /*
 The current file sets up the infrastructure for the visitor pattern.
@@ -19,6 +19,7 @@ pub enum ASTNodeEnum<'a> {
     VarDef(&'a mut VarDef),
     FnDef(&'a mut FnDef),
     StructDef(&'a mut StructDef),
+    Module(&'a mut Module),
 
     Definition(&'a mut Definition),
 }
@@ -97,9 +98,12 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for FnDef {
     fn visit(&mut self, visitor: &mut T) -> Result<Option<K>, V> {
         let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::FnDef(self))?;
         if visit_result {
-            self.return_type.visit(visitor)?;
             self.name.visit(visitor)?;
-            // self.body.visit(visitor)?;
+            for mut var_def in self.args.iter_mut() {
+                var_def.visit(visitor)?;
+            }
+            self.return_type.visit(visitor)?;
+            self.body.visit(visitor)?;
         }
         Ok(res)
     }
@@ -115,6 +119,19 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for StructDef {
     }
 }
 
+impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Module {
+    fn visit(&mut self, visitor: &mut T) -> Result<Option<K>, V> {
+        let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::Module(self))?;
+        if visit_result {
+            // skip the uses because name resolution will get rid of it instantly
+            for definition in self.definitions.iter_mut() {
+                definition.visit(visitor)?;
+            }
+        }
+        Ok(res)
+    }
+}
+
 impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Definition {
     fn visit(&mut self, visitor: &mut T) -> Result<Option<K>, V> {
         let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::Definition(self))?;
@@ -124,6 +141,7 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Definition {
                 Definition::VarDef(x) => x.visit(visitor)?,
                 Definition::StructDef(x) => x.visit(visitor)?,
                 Definition::FnDef(x) => x.visit(visitor)?,
+                Definition::Scope(x) => x.visit(visitor)?,
             };
         }
         Ok(res)

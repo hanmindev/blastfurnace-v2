@@ -80,7 +80,7 @@ pub struct FnDef {
     pub return_type: Type,
     pub name: FunctionReference,
     pub args: Vec<VarDef>,
-    // TODO: add body
+    pub body: Module,
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -89,10 +89,11 @@ pub enum Definition {
     VarDef(VarDef),
     StructDef(StructDef),
     FnDef(FnDef),
+    Scope(Module),
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct ASTFile {
-    pub uses: Vec<(RawName, ResolvedName)>,
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct Module {
+    pub uses: Option<Vec<(RawName, ResolvedName)>>,
     pub definitions: Vec<Definition>,
 }

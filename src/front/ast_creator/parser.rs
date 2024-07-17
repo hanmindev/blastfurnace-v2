@@ -1,6 +1,7 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
+use crate::front::ast_types::Type::Void;
 use crate::front::ast_types::{
-    ASTFile, Definition, FnDef, FunctionReference, RawName, ResolvedName, StaticVarDef, StructDef,
+    Definition, FnDef, FunctionReference, Module, RawName, ResolvedName, StaticVarDef, StructDef,
     Type, TypeReference, VarDef, VarReference,
 };
 use crate::modules::module_id_from_local;
@@ -9,7 +10,7 @@ use std::cmp::min;
 use std::collections::HashMap;
 use std::mem;
 
-pub fn parse_tokens(package_name: &str, tokens: Vec<Token>) -> ParseResult<ASTFile> {
+pub fn parse_tokens(package_name: &str, tokens: Vec<Token>) -> ParseResult<Module> {
     let mut parser = Parser::new(tokens);
     parser.parse_top_level(package_name)
 }
@@ -69,19 +70,23 @@ impl Parser {
         &self.tokens[min(self.curr_index + offset, self.tokens.len() - 1)].kind
     }
 
-    fn parse_top_level(&mut self, package_name: &str) -> ParseResult<ASTFile> {
-        let mut module = ASTFile {
-            uses: Default::default(),
+    fn parse_top_level(&mut self, package_name: &str) -> ParseResult<Module> {
+        let mut module = Module {
+            uses: Some(Default::default()),
             definitions: Default::default(),
         };
 
         loop {
             match self.peek(0) {
                 TokenKind::Use => {
-                    module.uses.extend(self.parse_use(package_name)?);
+                    module
+                        .uses
+                        .as_mut()
+                        .unwrap()
+                        .extend(self.parse_use(package_name)?);
                 }
                 TokenKind::Fn => {
-                    let definition = self.parse_fn_definition()?;
+                    let definition = self.parse_fn_definition(package_name)?;
                     module.definitions.push(Definition::FnDef(definition));
                 }
                 TokenKind::Struct => {
@@ -110,6 +115,54 @@ impl Parser {
         Ok(module)
     }
 
+    fn parse_intermediate_level(&mut self, package_name: &str) -> ParseResult<Module> {
+        let mut module = Module {
+            uses: Some(Default::default()),
+            definitions: Default::default(),
+        };
+        self.eat(&TokenKind::LBrace)?;
+        loop {
+            match self.peek(0) {
+                TokenKind::Use => {
+                    module
+                        .uses
+                        .as_mut()
+                        .unwrap()
+                        .extend(self.parse_use(package_name)?);
+                }
+                TokenKind::Fn => {
+                    let definition = self.parse_fn_definition(package_name)?;
+                    module.definitions.push(Definition::FnDef(definition));
+                }
+                TokenKind::Struct => {
+                    let definition = self.parse_struct_definition()?;
+                    module.definitions.push(Definition::StructDef(definition));
+                }
+                TokenKind::Let => {
+                    let definition = self.parse_var_definition()?;
+                    module.definitions.push(Definition::VarDef(definition));
+                }
+                TokenKind::LBrace => {
+                    let definition = self.parse_intermediate_level(package_name)?;
+                    module.definitions.push(Definition::Scope(definition));
+                }
+                TokenKind::RBrace => {
+                    break;
+                }
+                TokenKind::Static | _ => {
+                    // this is added to explicitly show that we are ignoring Static s
+                    return Err(ParseError::Unexpected(
+                        self.get_token().clone(),
+                        "Cannot be used for intermediate level".to_string(),
+                    ));
+                }
+            }
+        }
+        self.eat(&TokenKind::RBrace)?;
+
+        Ok(module)
+    }
+
     fn parse_type(&mut self) -> ParseResult<Type> {
         Ok(match self.eat_any() {
             TokenKind::TVoid => Type::Void,
@@ -124,7 +177,7 @@ impl Parser {
         })
     }
 
-    fn parse_fn_definition(&mut self) -> ParseResult<FnDef> {
+    fn parse_fn_definition(&mut self, package_name: &str) -> ParseResult<FnDef> {
         self.eat(&TokenKind::Fn)?;
         if let TokenKind::Ident(fn_name) = self.eat_any() {
             let fn_name = fn_name.clone();
@@ -159,17 +212,20 @@ impl Parser {
             }
 
             self.eat(&TokenKind::RParen)?;
-            self.eat(&TokenKind::Arrow)?;
-            let return_type = self.parse_type()?;
 
-            // TODO: parse body
-            self.eat(&TokenKind::LBrace)?;
-            self.eat(&TokenKind::RBrace)?;
+            let return_type = if self.eat(&TokenKind::Arrow).is_ok() {
+                self.parse_type()?
+            } else {
+                Void
+            };
+
+            let body = self.parse_intermediate_level(package_name)?;
 
             Ok(FnDef {
                 return_type,
                 name: FunctionReference::new(fn_name),
                 args,
+                body,
             })
         } else {
             Err(ParseError::Unexpected(
