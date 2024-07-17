@@ -1,7 +1,7 @@
 mod scope_table;
 mod visitor;
 
-use crate::front::ast_types::{ASTFile, Definition, RawName};
+use crate::front::ast_types::{RawNameModule, Definition, RawName};
 use crate::front::passes::name_resolution::scope_table::ScopeTable;
 use crate::front::passes::visitor::Visitable;
 use crate::modules::ModuleId;
@@ -24,7 +24,7 @@ type NameResolutionResult<T> = Result<T, NameResolutionError>;
  */
 pub fn resolve_names(
     module_id: ModuleId,  // id of the module we are resolving names for
-    mut astfile: ASTFile, // the ASTFile containing the definitions
+    mut astfile: RawNameModule, // the ASTFile containing the definitions
 ) -> Result<Vec<Definition>, NameResolutionError> {
     let mut scope_table = ScopeTable::new(module_id);
     scope_table.scope_enter();

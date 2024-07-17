@@ -92,7 +92,7 @@ pub enum Definition {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct ASTFile {
+pub struct RawNameModule {
     pub uses: Vec<(RawName, ResolvedName)>,
     pub definitions: Vec<Definition>,
 }

@@ -1,6 +1,6 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
 use crate::front::ast_types::{
-    ASTFile, Definition, FnDef, FunctionReference, RawName, ResolvedName, StaticVarDef, StructDef,
+    RawNameModule, Definition, FnDef, FunctionReference, RawName, ResolvedName, StaticVarDef, StructDef,
     Type, TypeReference, VarDef, VarReference,
 };
 use crate::modules::module_id_from_local;
@@ -9,7 +9,7 @@ use std::cmp::min;
 use std::collections::HashMap;
 use std::mem;
 
-pub fn parse_tokens(package_name: &str, tokens: Vec<Token>) -> ParseResult<ASTFile> {
+pub fn parse_tokens(package_name: &str, tokens: Vec<Token>) -> ParseResult<RawNameModule> {
     let mut parser = Parser::new(tokens);
     parser.parse_top_level(package_name)
 }
@@ -69,8 +69,8 @@ impl Parser {
         &self.tokens[min(self.curr_index + offset, self.tokens.len() - 1)].kind
     }
 
-    fn parse_top_level(&mut self, package_name: &str) -> ParseResult<ASTFile> {
-        let mut module = ASTFile {
+    fn parse_top_level(&mut self, package_name: &str) -> ParseResult<RawNameModule> {
+        let mut module = RawNameModule {
             uses: Default::default(),
             definitions: Default::default(),
         };
