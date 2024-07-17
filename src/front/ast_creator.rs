@@ -35,23 +35,23 @@ mod tests {
         let uses = vec![
             (
                 "struct_a".to_string(),
-                ("package_a:".to_string(), "struct_a".to_string()),
+                ("package_a".to_string(), "struct_a".to_string()),
             ),
             (
                 "struct_b".to_string(),
-                ("package_a:path\\path2".to_string(), "struct_b".to_string()),
+                ("package_a::path::path2".to_string(), "struct_b".to_string()),
             ),
             (
                 "struct_c".to_string(),
-                ("package_a:path\\path2".to_string(), "struct_c".to_string()),
+                ("package_a::path::path2".to_string(), "struct_c".to_string()),
             ),
             (
                 "struct_d".to_string(),
-                ("package_b:path\\path2".to_string(), "struct_d".to_string()),
+                ("package_b::path::path2".to_string(), "struct_d".to_string()),
             ),
             (
                 "struct_e".to_string(),
-                ("package_b:path\\path2".to_string(), "struct_e".to_string()),
+                ("package_b::path::path2".to_string(), "struct_e".to_string()),
             ),
         ];
 

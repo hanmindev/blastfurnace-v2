@@ -135,11 +135,7 @@ fn create_rel_path(file_path: &Utf8PathBuf, package_path: &Utf8PathBuf) -> Utf8P
 pub type ModuleId = String;
 
 pub fn module_id_from_local(package_name: &str, file_path: &Utf8PathBuf) -> ModuleId {
-    format!(
-        "{}:{}",
-        package_name,
-        file_path.with_extension("").to_string()
-    )
+    file_path.with_extension("").iter().fold(package_name.to_string(), |a, b| a + "::" + b)
 }
 
 pub type ModuleDependencies = HashSet<ModuleId>;
