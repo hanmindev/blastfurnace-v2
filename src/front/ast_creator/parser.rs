@@ -1,6 +1,6 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
 use crate::front::ast_types::{
-    Module, Definition, FnDef, FunctionReference, RawName, ResolvedName, StaticVarDef, StructDef,
+    Definition, FnDef, FunctionReference, Module, RawName, ResolvedName, StaticVarDef, StructDef,
     Type, TypeReference, VarDef, VarReference,
 };
 use crate::modules::module_id_from_local;
@@ -78,7 +78,11 @@ impl Parser {
         loop {
             match self.peek(0) {
                 TokenKind::Use => {
-                    module.uses.as_mut().unwrap().extend(self.parse_use(package_name)?);
+                    module
+                        .uses
+                        .as_mut()
+                        .unwrap()
+                        .extend(self.parse_use(package_name)?);
                 }
                 TokenKind::Fn => {
                     let definition = self.parse_fn_definition()?;
@@ -93,6 +97,10 @@ impl Parser {
                     module
                         .definitions
                         .push(Definition::StaticVarDef(definition));
+                }
+                TokenKind::LBrace => {
+                    let definition = self.parse_intermediate_level(package_name)?;
+                    module.definitions.push(Definition::Scope(definition));
                 }
                 TokenKind::Eof => {
                     break;
@@ -112,14 +120,18 @@ impl Parser {
 
     fn parse_intermediate_level(&mut self, package_name: &str) -> ParseResult<Module> {
         let mut module = Module {
-            uses: Default::default(),
+            uses: Some(Default::default()),
             definitions: Default::default(),
         };
-
+        self.eat(&TokenKind::LBrace)?;
         loop {
             match self.peek(0) {
                 TokenKind::Use => {
-                    module.uses.as_mut().unwrap().extend(self.parse_use(package_name)?);
+                    module
+                        .uses
+                        .as_mut()
+                        .unwrap()
+                        .extend(self.parse_use(package_name)?);
                 }
                 TokenKind::Fn => {
                     let definition = self.parse_fn_definition()?;
@@ -131,22 +143,21 @@ impl Parser {
                 }
                 TokenKind::Let => {
                     let definition = self.parse_var_definition()?;
-                    module
-                        .definitions
-                        .push(Definition::VarDef(definition));
+                    module.definitions.push(Definition::VarDef(definition));
                 }
-                TokenKind::Eof => {
+                TokenKind::RBrace => {
                     break;
                 }
                 TokenKind::Static | _ => {
                     // this is added to explicitly show that we are ignoring Static s
                     return Err(ParseError::Unexpected(
                         self.get_token().clone(),
-                        "Cannot be used for top level".to_string(),
+                        "Cannot be used for intermediate level".to_string(),
                     ));
                 }
             }
         }
+        self.eat(&TokenKind::RBrace)?;
 
         Ok(module)
     }

@@ -89,9 +89,10 @@ pub enum Definition {
     VarDef(VarDef),
     StructDef(StructDef),
     FnDef(FnDef),
+    Scope(Module),
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Module {
     pub uses: Option<Vec<(RawName, ResolvedName)>>,
     pub definitions: Vec<Definition>,

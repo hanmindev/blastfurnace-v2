@@ -1,11 +1,11 @@
 mod scope_table;
 mod visitor;
 
-use crate::front::ast_types::{Module, Definition, RawName};
+use crate::front::ast_types::{Definition, Module, RawName};
 use crate::front::passes::name_resolution::scope_table::ScopeTable;
 use crate::front::passes::visitor::Visitable;
 use crate::modules::ModuleId;
-use std::collections::{HashSet};
+use std::collections::HashSet;
 
 #[derive(Debug, PartialEq)]
 pub enum NameResolutionError {
@@ -23,21 +23,12 @@ type NameResolutionResult<T> = Result<T, NameResolutionError>;
 * It will also give the proper name for imported names
  */
 pub fn resolve_names(
-    module_id: ModuleId,  // id of the module we are resolving names for
-    raw_name_module: &mut Module, // the ASTFile containing the definitions
+    module_id: ModuleId, // id of the module we are resolving names for
+    module: &mut Module, // the ASTFile containing the definitions
 ) -> NameResolutionResult<()> {
     let mut scope_table = ScopeTable::new(module_id);
     scope_table.scope_enter();
-
-    // load the "use" statements into the scope table. There should not be any duplicates
-    for (raw_name, resolved_name) in raw_name_module.uses.take().unwrap() {
-        scope_table.scope_bind(&raw_name, true, Some(resolved_name))?;
-    }
-
-    // then we visit each definition in the ASTFile
-    for definition in raw_name_module.definitions.iter_mut() {
-        definition.visit(&mut scope_table)?;
-    }
+    module.visit(&mut scope_table)?;
     scope_table.scope_exit()?;
 
     Ok(())

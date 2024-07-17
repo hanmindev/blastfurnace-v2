@@ -1,6 +1,6 @@
 use crate::front::ast_types::Type;
 use crate::front::passes::name_resolution::scope_table::ScopeTable;
-use crate::front::passes::name_resolution::{NameResolutionError};
+use crate::front::passes::name_resolution::NameResolutionError;
 use crate::front::passes::visitor::{ASTNodeEnum, GenericVisitApplyResult, Visitable, Visitor};
 
 pub type ResolveResult<T> = GenericVisitApplyResult<T, NameResolutionError>;
@@ -46,6 +46,17 @@ impl Visitor<(), NameResolutionError> for ScopeTable {
                     false
                 }
                 ASTNodeEnum::Definition(_) => true,
+                ASTNodeEnum::Module(module) => {
+                    // load the "use" statements into the scope table. There should not be any duplicates
+                    for (raw_name, resolved_name) in module.uses.take().unwrap() {
+                        self.scope_bind(&raw_name, true, Some(resolved_name))?;
+                    }
+                    // then we visit each definition in the Module
+                    for definition in module.definitions.iter_mut() {
+                        definition.visit(self)?;
+                    }
+                    false
+                }
             },
             None,
         ))

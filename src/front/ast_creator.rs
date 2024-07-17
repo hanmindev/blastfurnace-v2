@@ -16,7 +16,10 @@ pub fn create_ast(file_root_package_name: &str, src: &str) -> Module {
 #[cfg(test)]
 mod tests {
     use crate::front::ast_creator::create_ast;
-    use crate::front::ast_types::{Module, Definition, FnDef, FunctionReference, StructDef, Type, TypeReference, VarDef, VarReference, StaticVarDef};
+    use crate::front::ast_types::{
+        Definition, FnDef, FunctionReference, Module, StaticVarDef, StructDef, Type, TypeReference,
+        VarDef, VarReference,
+    };
     use camino::Utf8PathBuf;
     use std::collections::HashMap;
 
@@ -129,6 +132,26 @@ mod tests {
                         ty: Type::Struct(TypeReference::new("struct_b".to_string())),
                     },
                 ],
+            })],
+        };
+
+        let ast = create_ast(current_package, src);
+        assert_eq!(expected_ast, ast);
+    }
+
+    #[test]
+    fn test_create_ast_scope() {
+        let current_package = "package_a";
+        let src = r#"
+        {
+        }
+        "#;
+
+        let expected_ast = Module {
+            uses: Some(vec![]),
+            definitions: vec![Definition::Scope(Module {
+                uses: Some(vec![]),
+                definitions: vec![],
             })],
         };
 
