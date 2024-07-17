@@ -110,6 +110,27 @@ mod tests {
     }
 
     #[test]
+    fn test_create_ast_void_fn() {
+        let current_package = "package_a";
+        let src = r#"
+        fn fn_a() {
+        }
+        "#;
+
+        let expected_ast = Module {
+            uses: Some(vec![]),
+            definitions: vec![Definition::FnDef(FnDef {
+                return_type: Type::Void,
+                name: FunctionReference::new("fn_a".to_string()),
+                args: vec![],
+            })],
+        };
+
+        let ast = create_ast(current_package, src);
+        assert_eq!(expected_ast, ast);
+    }
+
+    #[test]
     fn test_create_ast_fn() {
         let current_package = "package_a";
         let src = r#"

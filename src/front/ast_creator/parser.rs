@@ -8,6 +8,8 @@ use camino::Utf8PathBuf;
 use std::cmp::min;
 use std::collections::HashMap;
 use std::mem;
+use crate::front::ast_creator::token_types::TokenKind::TVoid;
+use crate::front::ast_types::Type::Void;
 
 pub fn parse_tokens(package_name: &str, tokens: Vec<Token>) -> ParseResult<Module> {
     let mut parser = Parser::new(tokens);
@@ -211,8 +213,12 @@ impl Parser {
             }
 
             self.eat(&TokenKind::RParen)?;
-            self.eat(&TokenKind::Arrow)?;
-            let return_type = self.parse_type()?;
+
+            let return_type = if self.eat(&TokenKind::Arrow).is_ok() {
+                self.parse_type()?
+            } else {
+                Void
+            };
 
             // TODO: parse body
             self.eat(&TokenKind::LBrace)?;
