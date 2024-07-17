@@ -52,6 +52,30 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_struct_name_collision() {
+        let current_package = "package_a";
+        let src = r#"
+        struct struct_a {
+            field_a: int,
+        }
+
+        struct struct_a {
+            field_a: int,
+        }
+        "#;
+        let ast_file = create_ast(current_package, src);
+
+        let module_id = ModuleId::from("module_a");
+
+        let err = resolve_names(module_id.clone(), ast_file);
+
+        assert_eq!(
+            err,
+            Err(NameResolutionError::Redefinition(RawName::from("struct_a")))
+        );
+    }
+
+    #[test]
     fn test_circular_struct_name_resolution() {
         let current_package = "package_a";
         let src = r#"
