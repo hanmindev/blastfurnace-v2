@@ -220,12 +220,13 @@ impl Parser {
                 Void
             };
 
-            self.parse_intermediate_level(package_name)?;
+            let body = self.parse_intermediate_level(package_name)?;
 
             Ok(FnDef {
                 return_type,
                 name: FunctionReference::new(fn_name),
                 args,
+                body,
             })
         } else {
             Err(ParseError::Unexpected(

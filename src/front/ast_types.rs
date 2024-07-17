@@ -80,7 +80,7 @@ pub struct FnDef {
     pub return_type: Type,
     pub name: FunctionReference,
     pub args: Vec<VarDef>,
-    // TODO: add body
+    pub body: Module
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]

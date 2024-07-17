@@ -123,6 +123,10 @@ mod tests {
                 return_type: Type::Void,
                 name: FunctionReference::new("fn_a".to_string()),
                 args: vec![],
+                body: Module {
+                    uses: Some(vec![]),
+                    definitions: vec![],
+                }
             })],
         };
 
@@ -153,6 +157,10 @@ mod tests {
                         ty: Type::Struct(TypeReference::new("struct_b".to_string())),
                     },
                 ],
+                body: Module {
+                    uses: Some(vec![]),
+                    definitions: vec![],
+                }
             })],
         };
 
@@ -161,19 +169,30 @@ mod tests {
     }
 
     #[test]
-    fn test_create_ast_scope() {
+    fn test_create_ast_scope_intermediate() {
         let current_package = "package_a";
         let src = r#"
-        {
+        fn fn_a() {
+        {}
         }
         "#;
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![Definition::Scope(Module {
-                uses: Some(vec![]),
-                definitions: vec![],
-            })],
+            definitions: vec![
+                Definition::FnDef(FnDef {
+                    return_type: Type::Void,
+                    name: FunctionReference::new("fn_a".to_string()),
+                    args: vec![],
+                    body: Module {
+                        uses: Some(vec![]),
+                        definitions: vec![Definition::Scope(Module {
+                            uses: Some(vec![]),
+                            definitions: vec![],
+                        })],
+                    }
+                }),
+            ],
         };
 
         let ast = create_ast(current_package, src);
