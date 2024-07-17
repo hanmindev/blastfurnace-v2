@@ -87,7 +87,7 @@ impl Parser {
                         .extend(self.parse_use(package_name)?);
                 }
                 TokenKind::Fn => {
-                    let definition = self.parse_fn_definition()?;
+                    let definition = self.parse_fn_definition(package_name)?;
                     module.definitions.push(Definition::FnDef(definition));
                 }
                 TokenKind::Struct => {
@@ -136,7 +136,7 @@ impl Parser {
                         .extend(self.parse_use(package_name)?);
                 }
                 TokenKind::Fn => {
-                    let definition = self.parse_fn_definition()?;
+                    let definition = self.parse_fn_definition(package_name)?;
                     module.definitions.push(Definition::FnDef(definition));
                 }
                 TokenKind::Struct => {
@@ -178,7 +178,7 @@ impl Parser {
         })
     }
 
-    fn parse_fn_definition(&mut self) -> ParseResult<FnDef> {
+    fn parse_fn_definition(&mut self, package_name: &str) -> ParseResult<FnDef> {
         self.eat(&TokenKind::Fn)?;
         if let TokenKind::Ident(fn_name) = self.eat_any() {
             let fn_name = fn_name.clone();
@@ -220,9 +220,7 @@ impl Parser {
                 Void
             };
 
-            // TODO: parse body
-            self.eat(&TokenKind::LBrace)?;
-            self.eat(&TokenKind::RBrace)?;
+            self.parse_intermediate_level(package_name)?;
 
             Ok(FnDef {
                 return_type,
