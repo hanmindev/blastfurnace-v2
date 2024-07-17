@@ -183,4 +183,85 @@ mod tests {
             )))
         );
     }
+    #[test]
+    fn test_scoped_circular_struct_error() {
+        let current_package = "package_a";
+        let src = r#"
+        struct struct_a {
+            field_a: struct_b,
+        }
+        fn fn_a() {
+            struct struct_b {
+                field_a: struct_a,
+            }
+        }
+        "#;
+        let mut ast_file = create_ast(current_package, src);
+
+        let module_id = ModuleId::from("module_a");
+
+        let err = resolve_names(module_id.clone(), &mut ast_file);
+
+        assert_eq!(
+            err,
+            Err(NameResolutionError::UnresolvedNames(HashSet::from_iter(
+                vec!["struct_b".to_string()]
+            )))
+        );
+    }
+    #[test]
+    fn test_scoped_non_circular_struct() {
+        let current_package = "package_a";
+        let src = r#"
+        struct struct_a {
+            field_a: int,
+        }
+        fn fn_a() {
+            struct struct_b {
+                field_a: struct_a,
+            }
+        }
+        "#;
+        let mut ast_file = create_ast(current_package, src);
+
+        let module_id = ModuleId::from("module_a");
+
+        resolve_names(module_id.clone(), &mut ast_file).unwrap();
+
+        let definitions = ast_file.definitions;
+
+        match definitions[0] {
+            Definition::StructDef(ref struct_def) => {
+                assert_eq!(
+                    Some((module_id.clone(), "0:0:struct_a".to_string())),
+                    struct_def.name.resolved
+                );
+            }
+            _ => panic!("Expected StructDef"),
+        }
+
+        match definitions[1] {
+            Definition::FnDef(ref fn_def) => {
+                match fn_def.body.definitions[0] {
+                    Definition::StructDef(ref struct_def) => {
+                        assert_eq!(
+                            Some((module_id.clone(), "1:0:struct_b".to_string())),
+                            struct_def.name.resolved
+                        );
+                        match struct_def.field_types["field_a"] {
+                            Type::Struct(ref type_ref) => {
+                                assert_eq!(
+                                    type_ref.resolved,
+                                    Some((module_id.clone(), "0:0:struct_a".to_string()))
+                                );
+                            }
+                            _ => panic!("Expected Struct"),
+                        }
+                    }
+                    _ => panic!("Expected StructDef"),
+                }
+            }
+            _ => panic!("Expected FunctionDef"),
+        }
+    }
 }
