@@ -100,10 +100,6 @@ impl Parser {
                         .definitions
                         .push(Definition::StaticVarDef(definition));
                 }
-                TokenKind::LBrace => {
-                    let definition = self.parse_intermediate_level(package_name)?;
-                    module.definitions.push(Definition::Scope(definition));
-                }
                 TokenKind::Eof => {
                     break;
                 }
@@ -146,6 +142,10 @@ impl Parser {
                 TokenKind::Let => {
                     let definition = self.parse_var_definition()?;
                     module.definitions.push(Definition::VarDef(definition));
+                }
+                TokenKind::LBrace => {
+                    let definition = self.parse_intermediate_level(package_name)?;
+                    module.definitions.push(Definition::Scope(definition));
                 }
                 TokenKind::RBrace => {
                     break;
