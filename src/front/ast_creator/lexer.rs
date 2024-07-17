@@ -135,6 +135,7 @@ impl<'src> Lexer<'src> {
                 "int" => TokenKind::TInt,
 
                 "static" => TokenKind::Static,
+                "let" => TokenKind::Let,
                 "struct" => TokenKind::Struct,
                 "fn" => TokenKind::Fn,
                 _ => TokenKind::Ident(ident),
