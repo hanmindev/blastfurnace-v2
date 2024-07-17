@@ -1,71 +1,53 @@
 use crate::front::ast_types::Type;
-use crate::front::passes::name_resolution::scope_table::SymbolType;
-use crate::front::passes::name_resolution::{NameResolutionError, NameResolver};
+use crate::front::passes::name_resolution::scope_table::ScopeTable;
+use crate::front::passes::name_resolution::{NameResolutionError};
 use crate::front::passes::visitor::{ASTNodeEnum, GenericVisitApplyResult, Visitable, Visitor};
 
-// TODO: less generic name
-type NameResolutionVisitApplyResult<T> = GenericVisitApplyResult<T, NameResolutionError>;
-
-impl Visitor<(), NameResolutionError> for NameResolver {
-    fn apply(&mut self, ast_node: &mut ASTNodeEnum) -> NameResolutionVisitApplyResult<()> {
-        match ast_node {
-            ASTNodeEnum::VarReference(_)
-            | ASTNodeEnum::TypeReference(_)
-            | ASTNodeEnum::FunctionReference(_) => {
-                panic!("References should not be visited directly")
-            }
-
-            ASTNodeEnum::VarDef(var_def) => {
-                if let Type::Struct(struct_name) = &mut var_def.ty {
-                    struct_name.resolved = Some(self.scope_table.scope_lookup_or_create(
-                        &self.module_id,
-                        &struct_name.raw,
-                        SymbolType::Struct,
-                    ));
+pub type ResolveResult<T> = GenericVisitApplyResult<T, NameResolutionError>;
+impl Visitor<(), NameResolutionError> for ScopeTable {
+    fn apply(&mut self, ast_node: &mut ASTNodeEnum) -> ResolveResult<()> {
+        Ok((
+            match ast_node {
+                ASTNodeEnum::VarReference(_)
+                | ASTNodeEnum::TypeReference(_)
+                | ASTNodeEnum::FunctionReference(_) => {
+                    panic!("Reference should not be visited directly")
                 }
 
-                var_def.name.resolved = Some(self.scope_table.scope_bind(
-                    &self.module_id,
-                    &var_def.name.raw,
-                    SymbolType::Var,
-                )?);
-            }
-            ASTNodeEnum::FnDef(fn_def) => {
-                self.scope_table.scope_enter();
-
-                fn_def.name.resolved = Some(self.scope_table.scope_bind(
-                    &self.module_id,
-                    &fn_def.name.raw,
-                    SymbolType::Fn,
-                )?);
-                for arg in &mut fn_def.args {
-                    arg.visit(self)?;
-                }
-
-                // fn_def.body.visit(self)?;
-                self.scope_table.scope_exit();
-            }
-            ASTNodeEnum::StructDef(struct_def) => {
-                struct_def.name.resolved = Some(self.scope_table.scope_bind(
-                    &self.module_id,
-                    &struct_def.name.raw,
-                    SymbolType::Struct,
-                )?);
-
-                for v in &mut struct_def.field_types.values_mut() {
-                    if let Type::Struct(struct_name) = v {
-                        struct_name.resolved = Some(self.scope_table.scope_lookup_or_create(
-                            &self.module_id,
-                            &struct_name.raw,
-                            SymbolType::Struct,
-                        ));
+                ASTNodeEnum::Type(ty) => {
+                    if let Type::Struct(struct_name) = ty {
+                        struct_name.resolved = Some(self.scope_lookup(&struct_name.raw, true)?);
                     }
+                    false
                 }
-            }
-
-            ASTNodeEnum::Definition(_) => return Ok((true, None)),
-            _ => return Ok((true, None)),
-        };
-        return Ok((false, None));
+                ASTNodeEnum::StaticVarDef(def) => {
+                    def.name.resolved = Some(self.scope_bind(&def.name.raw, true, None)?);
+                    def.ty.visit(self)?;
+                    false
+                }
+                ASTNodeEnum::VarDef(def) => {
+                    def.name.resolved = Some(self.scope_bind(&def.name.raw, false, None)?);
+                    def.ty.visit(self)?;
+                    false
+                }
+                ASTNodeEnum::FnDef(def) => {
+                    def.name.resolved = Some(self.scope_bind(&def.name.raw, true, None)?);
+                    for mut var_def in def.args.iter_mut() {
+                        var_def.visit(self)?;
+                    }
+                    def.return_type.visit(self)?;
+                    false
+                }
+                ASTNodeEnum::StructDef(def) => {
+                    def.name.resolved = Some(self.scope_bind(&def.name.raw, true, None)?);
+                    for (_, field_type) in def.field_types.iter_mut() {
+                        field_type.visit(self)?;
+                    }
+                    false
+                }
+                ASTNodeEnum::Definition(_) => true,
+            },
+            None,
+        ))
     }
 }

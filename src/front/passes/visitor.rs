@@ -1,5 +1,6 @@
 use crate::front::ast_types::{
-    Definition, FnDef, FunctionReference, StructDef, Type, TypeReference, VarDef, VarReference,
+    Definition, FnDef, FunctionReference, StaticVarDef, StructDef, Type, TypeReference, VarDef,
+    VarReference,
 };
 /*
 The current file sets up the infrastructure for the visitor pattern.
@@ -14,6 +15,7 @@ pub enum ASTNodeEnum<'a> {
     TypeReference(&'a mut TypeReference),
     FunctionReference(&'a mut FunctionReference),
 
+    StaticVarDef(&'a mut StaticVarDef),
     VarDef(&'a mut VarDef),
     FnDef(&'a mut FnDef),
     StructDef(&'a mut StructDef),
@@ -69,6 +71,17 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Type {
     }
 }
 
+impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for StaticVarDef {
+    fn visit(&mut self, visitor: &mut T) -> Result<Option<K>, V> {
+        let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::StaticVarDef(self))?;
+        if visit_result {
+            self.ty.visit(visitor)?;
+            self.name.visit(visitor)?;
+        }
+        Ok(res)
+    }
+}
+
 impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for VarDef {
     fn visit(&mut self, visitor: &mut T) -> Result<Option<K>, V> {
         let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::VarDef(self))?;
@@ -107,6 +120,7 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Definition {
         let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::Definition(self))?;
         if visit_result {
             match self {
+                Definition::StaticVarDef(x) => x.visit(visitor)?,
                 Definition::VarDef(x) => x.visit(visitor)?,
                 Definition::StructDef(x) => x.visit(visitor)?,
                 Definition::FnDef(x) => x.visit(visitor)?,

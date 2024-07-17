@@ -33,6 +33,9 @@ impl<T: Debug, R: Debug, D> Debug for Reference<T, R, D> {
     }
 }
 
+pub type RawName = String;
+pub type ResolvedName = (ModuleId, String);
+
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct VarDummy;
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -40,9 +43,9 @@ pub struct TypeDummy;
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct FunctionDummy;
 
-pub type VarReference = Reference<String, (ModuleId, String), VarDummy>;
-pub type TypeReference = Reference<String, (ModuleId, String), TypeDummy>;
-pub type FunctionReference = Reference<String, (ModuleId, String), FunctionDummy>;
+pub type VarReference = Reference<RawName, ResolvedName, VarDummy>;
+pub type TypeReference = Reference<RawName, ResolvedName, TypeDummy>;
+pub type FunctionReference = Reference<RawName, ResolvedName, FunctionDummy>;
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Type {
@@ -52,6 +55,12 @@ pub enum Type {
     Bool,
     String,
     Struct(TypeReference),
+}
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct StaticVarDef {
+    pub name: VarReference,
+    pub ty: Type,
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -76,7 +85,14 @@ pub struct FnDef {
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Definition {
+    StaticVarDef(StaticVarDef),
     VarDef(VarDef),
     StructDef(StructDef),
     FnDef(FnDef),
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ASTFile {
+    pub uses: Vec<(RawName, ResolvedName)>,
+    pub definitions: Vec<Definition>,
 }
