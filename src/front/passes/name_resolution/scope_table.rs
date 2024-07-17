@@ -1,8 +1,8 @@
-use std::collections::{HashMap, HashSet};
 use crate::front::ast_types::{RawName, ResolvedName};
-use crate::front::passes::name_resolution::{NameResolutionError, NameResolutionResult};
 use crate::front::passes::name_resolution::NameResolutionError::UndefinedLookup;
+use crate::front::passes::name_resolution::{NameResolutionError, NameResolutionResult};
 use crate::modules::ModuleId;
+use std::collections::{HashMap, HashSet};
 
 struct ScopeTableLayer {
     // maps the raw name to the resolved name
@@ -50,7 +50,12 @@ impl ScopeTable {
 
     If force_name is Some, the name will be bound to that name. This is used for publicly exposed names.
      */
-    pub fn scope_bind(&mut self, raw_name: &RawName, first_in_scope: bool, force_name: Option<ResolvedName>) -> NameResolutionResult<ResolvedName> {
+    pub fn scope_bind(
+        &mut self,
+        raw_name: &RawName,
+        first_in_scope: bool,
+        force_name: Option<ResolvedName>,
+    ) -> NameResolutionResult<ResolvedName> {
         let mut force_name = force_name;
         let layer = self.stack.last_mut().unwrap();
 
@@ -77,11 +82,16 @@ impl ScopeTable {
                     1
                 };
 
-                (self.module_id.clone(), format!("{}:{}", new_count, raw_name))
+                (
+                    self.module_id.clone(),
+                    format!("{}:{}", new_count, raw_name),
+                )
             }
         };
 
-        layer.symbols.insert(raw_name.clone(), resolved_name.clone());
+        layer
+            .symbols
+            .insert(raw_name.clone(), resolved_name.clone());
         Ok(resolved_name)
     }
 
@@ -90,7 +100,11 @@ impl ScopeTable {
 
     If allow_future_binding is true, the name can be unresolved in the current scope but bound later. This can be useful for structs with recursive definitions.
      */
-    pub fn scope_lookup(&mut self, raw_name: &RawName, allow_future_binding: bool) -> NameResolutionResult<ResolvedName> {
+    pub fn scope_lookup(
+        &mut self,
+        raw_name: &RawName,
+        allow_future_binding: bool,
+    ) -> NameResolutionResult<ResolvedName> {
         for layer in self.stack.iter().rev() {
             if let Some(resolved_name) = layer.symbols.get(raw_name) {
                 return Ok(resolved_name.clone());
@@ -101,7 +115,6 @@ impl ScopeTable {
             let layer = self.stack.last_mut().unwrap();
             layer.unresolved.insert(raw_name.clone());
             Ok(self.scope_bind(raw_name, true, None)?)
-
         } else {
             Err(UndefinedLookup(raw_name.clone()))
         }

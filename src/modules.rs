@@ -12,7 +12,7 @@ mod types;
 enum ModuleBuildError {
     NoMainInRoot,
     FileNoLongerExists,
-    FileReadError
+    FileReadError,
 }
 
 type ModuleBuildResult<T> = Result<T, ModuleBuildError>;
@@ -92,10 +92,7 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                 .or(Err(ModuleBuildError::FileNoLongerExists))?;
 
             let module_id = module_id_from_local(&node.package_name, &rel_path);
-            if let Some(&ref body) = self
-                .build_cache
-                .get_module(&module_id)
-            {
+            if let Some(&ref body) = self.build_cache.get_module(&module_id) {
                 if body.read_on == age {
                     node.body = Some(body.clone());
                     continue;
@@ -110,9 +107,12 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                     .or(Err(ModuleBuildError::FileNoLongerExists))?;
 
                 let mut file_content = String::new();
-                reader.read_to_string(&mut file_content).or(Err(ModuleBuildError::FileReadError))?;
+                reader
+                    .read_to_string(&mut file_content)
+                    .or(Err(ModuleBuildError::FileReadError))?;
 
-                let (direct_deps, definitions) = parse_file(&node.package_name, module_id, &file_content);
+                let (direct_deps, definitions) =
+                    parse_file(&node.package_name, module_id, &file_content);
 
                 Some(ModuleCachableData {
                     read_on: age,

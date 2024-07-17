@@ -1,10 +1,13 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
-use crate::front::ast_types::{Definition, FnDef, FunctionReference, ASTFile, StructDef, Type, TypeReference, VarDef, VarReference, RawName, ResolvedName};
+use crate::front::ast_types::{
+    ASTFile, Definition, FnDef, FunctionReference, RawName, ResolvedName, StructDef, Type,
+    TypeReference, VarDef, VarReference,
+};
+use crate::modules::module_id_from_local;
 use camino::Utf8PathBuf;
 use std::cmp::min;
 use std::collections::HashMap;
 use std::mem;
-use crate::modules::module_id_from_local;
 
 pub fn parse_tokens(package_name: &str, tokens: Vec<Token>) -> ParseResult<ASTFile> {
     let mut parser = Parser::new(tokens);
@@ -261,7 +264,10 @@ impl Parser {
                     TokenKind::Ident(ident) => {
                         let ident = ident.clone();
                         if self.peek(0) == &TokenKind::SemiColon {
-                            res.push((ident.clone(), (module_id_from_local(&package_name, &path), ident.clone())));
+                            res.push((
+                                ident.clone(),
+                                (module_id_from_local(&package_name, &path), ident.clone()),
+                            ));
                             break;
                         } else {
                             path.push(ident);
@@ -275,7 +281,7 @@ impl Parser {
                             {
                                 res.push((
                                     ident.clone(),
-                                    (module_id_from_local(&package_name, &path), ident.clone())
+                                    (module_id_from_local(&package_name, &path), ident.clone()),
                                 ));
                                 if self.eat(&TokenKind::Comma).is_err() {
                                     break;

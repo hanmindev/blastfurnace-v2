@@ -17,8 +17,8 @@ pub fn create_ast(file_root_package_name: &str, src: &str) -> ASTFile {
 mod tests {
     use crate::front::ast_creator::create_ast;
     use crate::front::ast_types::{
-        Definition, FnDef, FunctionReference, ASTFile, StructDef, Type, TypeReference,
-        VarDef, VarReference,
+        ASTFile, Definition, FnDef, FunctionReference, StructDef, Type, TypeReference, VarDef,
+        VarReference,
     };
     use camino::Utf8PathBuf;
     use std::collections::HashMap;
@@ -35,7 +35,8 @@ mod tests {
         let uses = vec![
             (
                 "struct_a".to_string(),
-                ("package_a:".to_string(), "struct_a".to_string())),
+                ("package_a:".to_string(), "struct_a".to_string()),
+            ),
             (
                 "struct_b".to_string(),
                 ("package_a:path\\path2".to_string(), "struct_b".to_string()),

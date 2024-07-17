@@ -1,11 +1,11 @@
 mod scope_table;
 mod visitor;
 
-use std::collections::{HashMap, HashSet};
 use crate::front::ast_types::{ASTFile, Definition, RawName, ResolvedName};
-use crate::front::passes::name_resolution::scope_table::{ScopeTable};
+use crate::front::passes::name_resolution::scope_table::ScopeTable;
 use crate::front::passes::visitor::Visitable;
-use crate::modules::{ModuleId};
+use crate::modules::ModuleId;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, PartialEq)]
 pub enum NameResolutionError {
@@ -23,7 +23,7 @@ type NameResolutionResult<T> = Result<T, NameResolutionError>;
 * It will also give the proper name for imported names
  */
 pub fn resolve_names(
-    module_id: ModuleId, // id of the module we are resolving names for
+    module_id: ModuleId,  // id of the module we are resolving names for
     mut astfile: ASTFile, // the ASTFile containing the definitions
 ) -> Result<Vec<Definition>, NameResolutionError> {
     let mut scope_table = ScopeTable::new(module_id);
@@ -42,7 +42,6 @@ pub fn resolve_names(
 
     Ok(astfile.definitions)
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -124,7 +123,9 @@ mod tests {
 
         assert_eq!(
             err,
-            Err(NameResolutionError::UnresolvedNames(HashSet::from_iter(vec!["struct_b".to_string()])))
+            Err(NameResolutionError::UnresolvedNames(HashSet::from_iter(
+                vec!["struct_b".to_string()]
+            )))
         );
     }
 }
