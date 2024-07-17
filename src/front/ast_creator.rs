@@ -1,11 +1,11 @@
 use crate::front::ast_creator::lexer::get_tokens;
-use crate::front::ast_types::RawNameModule;
+use crate::front::ast_types::Module;
 
 mod lexer;
 mod parser;
 mod token_types;
 
-pub fn create_ast(file_root_package_name: &str, src: &str) -> RawNameModule {
+pub fn create_ast(file_root_package_name: &str, src: &str) -> Module {
     // TODO: error handling
     let tokens = get_tokens(src).unwrap();
     let ast = parser::parse_tokens(file_root_package_name, tokens).unwrap();
@@ -17,7 +17,7 @@ pub fn create_ast(file_root_package_name: &str, src: &str) -> RawNameModule {
 mod tests {
     use crate::front::ast_creator::create_ast;
     use crate::front::ast_types::{
-        RawNameModule, Definition, FnDef, FunctionReference, StructDef, Type, TypeReference, VarDef,
+        Module, Definition, FnDef, FunctionReference, StructDef, Type, TypeReference, VarDef,
         VarReference,
     };
     use camino::Utf8PathBuf;
@@ -70,7 +70,7 @@ mod tests {
         }
         "#;
 
-        let expected = RawNameModule {
+        let expected = Module {
             uses: vec![],
             definitions: vec![Definition::StructDef(StructDef {
                 name: TypeReference::new("struct_a".to_string()),
@@ -97,7 +97,7 @@ mod tests {
         static val: int;
         "#;
 
-        let expected_ast = RawNameModule {
+        let expected_ast = Module {
             uses: vec![],
             definitions: vec![Definition::VarDef(VarDef {
                 name: VarReference::new("val".to_string()),
@@ -117,7 +117,7 @@ mod tests {
         }
         "#;
 
-        let expected_ast = RawNameModule {
+        let expected_ast = Module {
             uses: vec![],
             definitions: vec![Definition::FnDef(FnDef {
                 return_type: Type::Struct(TypeReference::new("struct_c".to_string())),
