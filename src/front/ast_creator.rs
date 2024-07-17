@@ -196,4 +196,49 @@ mod tests {
         let ast = create_ast(current_package, src);
         assert_eq!(expected_ast, ast);
     }
+
+    #[test]
+    fn test_create_ast_layered_definition() {
+        let current_package = "package_a";
+        let src = r#"
+        fn fn_a() {
+        {
+        struct struct_a {
+            field_a: int,
+            field_b: struct_b,
+        }
+        }
+        }
+        "#;
+
+        let expected_ast = Module {
+            uses: Some(vec![]),
+            definitions: vec![Definition::FnDef(FnDef {
+                return_type: Type::Void,
+                name: FunctionReference::new("fn_a".to_string()),
+                args: vec![],
+                body: Module {
+                    uses: Some(vec![]),
+                    definitions: vec![Definition::Scope(Module {
+                        uses: Some(vec![]),
+                        definitions: vec![Definition::StructDef(StructDef {
+                            name: TypeReference::new("struct_a".to_string()),
+                            field_types: {
+                                let mut field_types = HashMap::new();
+                                field_types.insert("field_a".to_string(), Type::Int);
+                                field_types.insert(
+                                    "field_b".to_string(),
+                                    Type::Struct(TypeReference::new("struct_b".to_string())),
+                                );
+                                field_types
+                            },
+                        })],
+                    })],
+                },
+            })],
+        };
+
+        let ast = create_ast(current_package, src);
+        assert_eq!(expected_ast, ast);
+    }
 }
