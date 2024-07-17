@@ -57,17 +57,18 @@ impl ScopeTable {
         force_name: Option<ResolvedName>,
     ) -> NameResolutionResult<ResolvedName> {
         let mut force_name = force_name;
+        let size = self.stack.len();
         let layer = self.stack.last_mut().unwrap();
 
         if first_in_scope {
-            if layer.symbols.contains_key(raw_name) {
-                if !layer.unresolved.remove(raw_name) {
+            if let Some(resolved_name) = layer.symbols.get(raw_name) {
+                if layer.unresolved.remove(raw_name) {
+                    if force_name.is_none() {
+                        force_name = Some(resolved_name.clone());
+                    }
+                } else {
                     return Err(NameResolutionError::Redefinition(raw_name.clone()));
                 }
-            }
-
-            if force_name.is_none() {
-                force_name = Some((self.module_id.clone(), raw_name.clone()));
             }
         }
 
@@ -79,12 +80,12 @@ impl ScopeTable {
                     *val
                 } else {
                     self.global_count.insert(raw_name.clone(), 1);
-                    1
+                    0
                 };
 
                 (
                     self.module_id.clone(),
-                    format!("{}:{}", new_count, raw_name),
+                    format!("{}:{}:{}", size - 1, new_count, raw_name),
                 )
             }
         };

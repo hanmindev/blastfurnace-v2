@@ -129,14 +129,14 @@ mod tests {
         match definitions[0] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
-                    Some((module_id.clone(), "struct_a".to_string())),
+                    Some((module_id.clone(), "0:0:struct_a".to_string())),
                     struct_def.name.resolved
                 );
                 match struct_def.field_types["field_a"] {
                     Type::Struct(ref type_ref) => {
                         assert_eq!(
                             type_ref.resolved,
-                            Some((module_id.clone(), "struct_b".to_string()))
+                            Some((module_id.clone(), "0:0:struct_b".to_string()))
                         );
                     }
                     _ => panic!("Expected Struct"),
@@ -148,14 +148,14 @@ mod tests {
         match definitions[1] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
-                    Some((module_id.clone(), "struct_b".to_string())),
+                    Some((module_id.clone(), "0:0:struct_b".to_string())),
                     struct_def.name.resolved
                 );
                 match struct_def.field_types["field_a"] {
                     Type::Struct(ref type_ref) => {
                         assert_eq!(
                             type_ref.resolved,
-                            Some((module_id.clone(), "struct_a".to_string()))
+                            Some((module_id.clone(), "0:0:struct_a".to_string()))
                         );
                     }
                     _ => panic!("Expected Struct"),
