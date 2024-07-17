@@ -1,7 +1,7 @@
 mod scope_table;
 mod visitor;
 
-use crate::front::ast_types::{Module, Definition, RawName, ResolvedNameModule};
+use crate::front::ast_types::{Module, Definition, RawName};
 use crate::front::passes::name_resolution::scope_table::ScopeTable;
 use crate::front::passes::visitor::Visitable;
 use crate::modules::ModuleId;
@@ -24,13 +24,13 @@ type NameResolutionResult<T> = Result<T, NameResolutionError>;
  */
 pub fn resolve_names(
     module_id: ModuleId,  // id of the module we are resolving names for
-    mut raw_name_module: Module, // the ASTFile containing the definitions
-) -> Result<ResolvedNameModule, NameResolutionError> {
+    raw_name_module: &mut Module, // the ASTFile containing the definitions
+) -> NameResolutionResult<()> {
     let mut scope_table = ScopeTable::new(module_id);
     scope_table.scope_enter();
 
     // load the "use" statements into the scope table. There should not be any duplicates
-    for (raw_name, resolved_name) in raw_name_module.uses.drain(0..) {
+    for (raw_name, resolved_name) in raw_name_module.uses.take().unwrap() {
         scope_table.scope_bind(&raw_name, true, Some(resolved_name))?;
     }
 
@@ -40,9 +40,7 @@ pub fn resolve_names(
     }
     scope_table.scope_exit()?;
 
-    Ok(ResolvedNameModule {
-        definitions: raw_name_module.definitions,
-    })
+    Ok(())
 }
 
 #[cfg(test)]
@@ -60,11 +58,11 @@ mod tests {
         static var_a: int;
         static var_a: int;
         "#;
-        let ast_file = create_ast(current_package, src);
+        let mut ast_file = create_ast(current_package, src);
 
         let module_id = ModuleId::from("module_a");
 
-        let err = resolve_names(module_id.clone(), ast_file);
+        let err = resolve_names(module_id.clone(), &mut ast_file);
 
         assert_eq!(
             err,
@@ -84,11 +82,11 @@ mod tests {
             field_a: int,
         }
         "#;
-        let ast_file = create_ast(current_package, src);
+        let mut ast_file = create_ast(current_package, src);
 
         let module_id = ModuleId::from("module_a");
 
-        let err = resolve_names(module_id.clone(), ast_file);
+        let err = resolve_names(module_id.clone(), &mut ast_file);
 
         assert_eq!(
             err,
@@ -105,11 +103,11 @@ mod tests {
         fn fn_a() -> int {
         }
         "#;
-        let ast_file = create_ast(current_package, src);
+        let mut ast_file = create_ast(current_package, src);
 
         let module_id = ModuleId::from("module_a");
 
-        let err = resolve_names(module_id.clone(), ast_file);
+        let err = resolve_names(module_id.clone(), &mut ast_file);
 
         assert_eq!(
             err,
@@ -129,11 +127,13 @@ mod tests {
             field_a: struct_a,
         }
         "#;
-        let ast_file = create_ast(current_package, src);
+        let mut ast_file = create_ast(current_package, src);
 
         let module_id = ModuleId::from("module_a");
 
-        let definitions = resolve_names(module_id.clone(), ast_file).unwrap();
+        resolve_names(module_id.clone(), &mut ast_file).unwrap();
+
+        let definitions = ast_file.definitions;
 
         match definitions[0] {
             Definition::StructDef(ref struct_def) => {
@@ -181,11 +181,11 @@ mod tests {
             field_a: struct_b,
         }
         "#;
-        let ast_file = create_ast(current_package, src);
+        let mut ast_file = create_ast(current_package, src);
 
         let module_id = ModuleId::from("module_a");
 
-        let err = resolve_names(module_id.clone(), ast_file);
+        let err = resolve_names(module_id.clone(), &mut ast_file);
 
         assert_eq!(
             err,

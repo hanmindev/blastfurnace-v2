@@ -17,7 +17,7 @@ pub fn parse_file(
     let mut ast_file = create_ast(package_name, file_contents);
 
     // TODO: error handling
-    let definitions = resolve_names(module_id, ast_file).unwrap();
+    let definitions = resolve_names(module_id, &mut ast_file).unwrap();
 
     let module_dependencies: ModuleDependencies = HashSet::new();
     let definitions: DefinitionMap;

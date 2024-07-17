@@ -71,14 +71,14 @@ impl Parser {
 
     fn parse_top_level(&mut self, package_name: &str) -> ParseResult<Module> {
         let mut module = Module {
-            uses: Default::default(),
+            uses: Some(Default::default()),
             definitions: Default::default(),
         };
 
         loop {
             match self.peek(0) {
                 TokenKind::Use => {
-                    module.uses.extend(self.parse_use(package_name)?);
+                    module.uses.as_mut().unwrap().extend(self.parse_use(package_name)?);
                 }
                 TokenKind::Fn => {
                     let definition = self.parse_fn_definition()?;
@@ -119,7 +119,7 @@ impl Parser {
         loop {
             match self.peek(0) {
                 TokenKind::Use => {
-                    module.uses.extend(self.parse_use(package_name)?);
+                    module.uses.as_mut().unwrap().extend(self.parse_use(package_name)?);
                 }
                 TokenKind::Fn => {
                     let definition = self.parse_fn_definition()?;

@@ -16,10 +16,7 @@ pub fn create_ast(file_root_package_name: &str, src: &str) -> Module {
 #[cfg(test)]
 mod tests {
     use crate::front::ast_creator::create_ast;
-    use crate::front::ast_types::{
-        Module, Definition, FnDef, FunctionReference, StructDef, Type, TypeReference, VarDef,
-        VarReference,
-    };
+    use crate::front::ast_types::{Module, Definition, FnDef, FunctionReference, StructDef, Type, TypeReference, VarDef, VarReference, StaticVarDef};
     use camino::Utf8PathBuf;
     use std::collections::HashMap;
 
@@ -56,7 +53,7 @@ mod tests {
         ];
 
         let ast = create_ast(current_package, src);
-        assert_eq!(uses, ast.uses);
+        assert_eq!(uses, ast.uses.unwrap());
     }
 
     #[test]
@@ -71,7 +68,7 @@ mod tests {
         "#;
 
         let expected = Module {
-            uses: vec![],
+            uses: Some(vec![]),
             definitions: vec![Definition::StructDef(StructDef {
                 name: TypeReference::new("struct_a".to_string()),
                 field_types: {
@@ -98,8 +95,8 @@ mod tests {
         "#;
 
         let expected_ast = Module {
-            uses: vec![],
-            definitions: vec![Definition::VarDef(VarDef {
+            uses: Some(vec![]),
+            definitions: vec![Definition::StaticVarDef(StaticVarDef {
                 name: VarReference::new("val".to_string()),
                 ty: Type::Int,
             })],
@@ -118,7 +115,7 @@ mod tests {
         "#;
 
         let expected_ast = Module {
-            uses: vec![],
+            uses: Some(vec![]),
             definitions: vec![Definition::FnDef(FnDef {
                 return_type: Type::Struct(TypeReference::new("struct_c".to_string())),
                 name: FunctionReference::new("fn_a".to_string()),

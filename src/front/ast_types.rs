@@ -93,6 +93,6 @@ pub enum Definition {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Module {
-    pub uses: Vec<(RawName, ResolvedName)>,
+    pub uses: Option<Vec<(RawName, ResolvedName)>>,
     pub definitions: Vec<Definition>,
 }
