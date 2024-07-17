@@ -48,6 +48,7 @@ impl Visitor<(), NameResolutionError> for ScopeTable {
                 }
                 ASTNodeEnum::Definition(_) => true,
                 ASTNodeEnum::Module(module) => {
+                    self.scope_enter();
                     // load the "use" statements into the scope table. There should not be any duplicates
                     for (raw_name, resolved_name) in module.uses.take().unwrap() {
                         self.scope_bind(&raw_name, true, Some(resolved_name))?;
@@ -56,6 +57,7 @@ impl Visitor<(), NameResolutionError> for ScopeTable {
                     for definition in module.definitions.iter_mut() {
                         definition.visit(self)?;
                     }
+                    self.scope_exit()?;
                     false
                 }
             },

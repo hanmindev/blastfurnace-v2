@@ -27,9 +27,7 @@ pub fn resolve_names(
     module: &mut Module, // the ASTFile containing the definitions
 ) -> NameResolutionResult<()> {
     let mut scope_table = ScopeTable::new(module_id);
-    scope_table.scope_enter();
     module.visit(&mut scope_table)?;
-    scope_table.scope_exit()?;
 
     Ok(())
 }
