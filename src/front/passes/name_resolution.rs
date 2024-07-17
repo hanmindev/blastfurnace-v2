@@ -52,6 +52,25 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_static_name_collision() {
+        let current_package = "package_a";
+        let src = r#"
+        static var_a: int;
+        static var_a: int;
+        "#;
+        let ast_file = create_ast(current_package, src);
+
+        let module_id = ModuleId::from("module_a");
+
+        let err = resolve_names(module_id.clone(), ast_file);
+
+        assert_eq!(
+            err,
+            Err(NameResolutionError::Redefinition(RawName::from("var_a")))
+        );
+    }
+
+    #[test]
     fn test_struct_name_collision() {
         let current_package = "package_a";
         let src = r#"
@@ -72,6 +91,27 @@ mod tests {
         assert_eq!(
             err,
             Err(NameResolutionError::Redefinition(RawName::from("struct_a")))
+        );
+    }
+
+    #[test]
+    fn test_function_name_collision() {
+        let current_package = "package_a";
+        let src = r#"
+        fn fn_a() -> int {
+        }
+        fn fn_a() -> int {
+        }
+        "#;
+        let ast_file = create_ast(current_package, src);
+
+        let module_id = ModuleId::from("module_a");
+
+        let err = resolve_names(module_id.clone(), ast_file);
+
+        assert_eq!(
+            err,
+            Err(NameResolutionError::Redefinition(RawName::from("fn_a")))
         );
     }
 
