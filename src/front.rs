@@ -14,10 +14,10 @@ pub fn parse_file(
     module_id: ModuleId,
     file_contents: &str,
 ) -> (ModuleDependencies, DefinitionMap) {
-    let mut ast_file = create_ast(package_name, file_contents);
+    let mut module = create_ast(package_name, file_contents);
 
     // TODO: error handling
-    let definitions = resolve_names(module_id, &mut ast_file).unwrap();
+    let definitions = resolve_names(module_id, &mut module).unwrap();
 
     let module_dependencies: ModuleDependencies = HashSet::new();
     let definitions: DefinitionMap;
