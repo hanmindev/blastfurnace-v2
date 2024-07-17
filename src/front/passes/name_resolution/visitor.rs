@@ -36,6 +36,7 @@ impl Visitor<(), NameResolutionError> for ScopeTable {
                         var_def.visit(self)?;
                     }
                     def.return_type.visit(self)?;
+                    def.body.visit(self)?;
                     false
                 }
                 ASTNodeEnum::StructDef(def) => {

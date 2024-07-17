@@ -98,9 +98,12 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for FnDef {
     fn visit(&mut self, visitor: &mut T) -> Result<Option<K>, V> {
         let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::FnDef(self))?;
         if visit_result {
-            self.return_type.visit(visitor)?;
             self.name.visit(visitor)?;
-            // self.body.visit(visitor)?;
+            for mut var_def in self.args.iter_mut() {
+                var_def.visit(visitor)?;
+            }
+            self.return_type.visit(visitor)?;
+            self.body.visit(visitor)?;
         }
         Ok(res)
     }
