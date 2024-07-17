@@ -1,4 +1,7 @@
-use crate::front::ast_types::{Definition, FnDef, FunctionReference, StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference};
+use crate::front::ast_types::{
+    Definition, FnDef, FunctionReference, StaticVarDef, StructDef, Type, TypeReference, VarDef,
+    VarReference,
+};
 /*
 The current file sets up the infrastructure for the visitor pattern.
 

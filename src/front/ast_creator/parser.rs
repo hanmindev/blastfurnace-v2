@@ -1,5 +1,8 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
-use crate::front::ast_types::{ASTFile, Definition, FnDef, FunctionReference, RawName, ResolvedName, StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference};
+use crate::front::ast_types::{
+    ASTFile, Definition, FnDef, FunctionReference, RawName, ResolvedName, StaticVarDef, StructDef,
+    Type, TypeReference, VarDef, VarReference,
+};
 use crate::modules::module_id_from_local;
 use camino::Utf8PathBuf;
 use std::cmp::min;
@@ -87,12 +90,15 @@ impl Parser {
                 }
                 TokenKind::Static => {
                     let definition = self.parse_static_var_definition()?;
-                    module.definitions.push(Definition::StaticVarDef(definition));
+                    module
+                        .definitions
+                        .push(Definition::StaticVarDef(definition));
                 }
                 TokenKind::Eof => {
                     break;
                 }
-                TokenKind::Let | _ => { // this is added to explicitly show that we are ignoring Let s
+                TokenKind::Let | _ => {
+                    // this is added to explicitly show that we are ignoring Let s
                     return Err(ParseError::Unexpected(
                         self.get_token().clone(),
                         "Cannot be used for top level".to_string(),

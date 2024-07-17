@@ -1,6 +1,6 @@
 use crate::front::ast_types::Type;
 use crate::front::passes::name_resolution::scope_table::ScopeTable;
-use crate::front::passes::name_resolution::{NameResolutionError, NameResolutionResult};
+use crate::front::passes::name_resolution::{NameResolutionError};
 use crate::front::passes::visitor::{ASTNodeEnum, GenericVisitApplyResult, Visitable, Visitor};
 
 pub type ResolveResult<T> = GenericVisitApplyResult<T, NameResolutionError>;

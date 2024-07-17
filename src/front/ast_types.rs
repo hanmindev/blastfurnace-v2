@@ -1,5 +1,4 @@
 use crate::modules::ModuleId;
-use camino::Utf8PathBuf;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
