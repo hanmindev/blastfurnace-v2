@@ -1,13 +1,14 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use crate::front::ast_types::{RawName, ResolvedName};
 use crate::front::passes::name_resolution::{NameResolutionError, NameResolutionResult};
+use crate::front::passes::name_resolution::NameResolutionError::UndefinedLookup;
 use crate::modules::ModuleId;
 
 struct ScopeTableLayer {
     // maps the raw name to the resolved name
     symbols: HashMap<RawName, ResolvedName>,
     // contains the raw names that were referenced but were not bound. If they get bound later, they will move to the symbols map.
-    unresolved: HashMap<RawName, ResolvedName>,
+    unresolved: HashSet<RawName>,
 }
 
 pub struct ScopeTable {
@@ -21,10 +22,7 @@ impl ScopeTable {
     pub fn new(module_id: ModuleId) -> ScopeTable {
         ScopeTable {
             module_id,
-            stack: vec![ScopeTableLayer {
-                symbols: HashMap::new(),
-                unresolved: HashMap::new(),
-            }],
+            stack: vec![],
             global_count: HashMap::new(),
         }
     }
@@ -32,58 +30,80 @@ impl ScopeTable {
     pub fn scope_enter(&mut self) {
         self.stack.push(ScopeTableLayer {
             symbols: HashMap::new(),
-            unresolved: HashMap::new(),
+            unresolved: HashSet::new(),
         });
     }
 
-    pub fn scope_exit(&mut self) {
-        if self.stack.len() <= 1 {
-            panic!("Cannot exit the global scope");
+    pub fn scope_exit(&mut self) -> NameResolutionResult<()> {
+        let layer = self.stack.pop().unwrap();
+
+        if !layer.unresolved.is_empty() {
+            return Err(NameResolutionError::UnresolvedNames(layer.unresolved));
         }
-
-        let layer = self.stack.pop().unwrap(); // can unwrap because we checked the length
-
-        // move all unresolved symbols to the parent scope
-        self.stack.last_mut().unwrap().unresolved.extend(layer.unresolved);
-    }
-
-    // forces binding. each raw name can only be bound once. Must be bound before any scope_bind calls.
-    pub fn scope_bind_pre_made_name(&mut self, raw: RawName, resolved: ResolvedName) -> NameResolutionResult<()> {
-        let node = &mut self.stack.last_mut().unwrap();
-
-        if node.symbols.contains_key(&raw) {
-            return Err(NameResolutionError::Redefinition(raw, resolved));
-        }
-
-        node.symbols.insert(raw, resolved);
-
         Ok(())
     }
 
-    pub fn scope_bind(&mut self, raw: RawName) -> NameResolutionResult<ResolvedName> {
-        let node = &mut self.stack.last_mut().unwrap();
+    /*
+    * Binds the name to the scope and returns a new resolved name. This is used for declarations.
 
-        if let Some(resolved) = node.symbols.get(&raw) {
-            return Err(NameResolutionError::Redefinition(raw, resolved.clone()));
-        }
+    If first_in_scope is true, there must not be any existing bindings for the name in the current scope. This is useful if you want to ensure that a name is not redefined in the same scope.
 
-        if let Some(resolved) = node.unresolved.get(&raw) {
-            return Err(NameResolutionError::Redefinition(raw, resolved.clone()));
-        }
+    If force_name is Some, the name will be bound to that name. This is used for publicly exposed names.
+     */
+    pub fn scope_bind(&mut self, raw_name: &RawName, first_in_scope: bool, force_name: Option<ResolvedName>) -> NameResolutionResult<ResolvedName> {
+        let mut force_name = force_name;
+        let layer = self.stack.last_mut().unwrap();
 
-        let resolved = match self.global_count.get_mut(&raw) {
-            Some(count) => {
-                *count += 1;
-                (self.module_id.clone(), format!("{name}:{count}", count = count, name = raw))
+        if first_in_scope {
+            if layer.symbols.contains_key(raw_name) {
+                if !layer.unresolved.remove(raw_name) {
+                    return Err(NameResolutionError::Redefinition(raw_name.clone()));
+                }
             }
+
+            if force_name.is_none() {
+                force_name = Some((self.module_id.clone(), raw_name.clone()));
+            }
+        }
+
+        let resolved_name = match force_name {
+            Some(name) => name,
             None => {
-                (self.module_id.clone(), raw.clone())
+                let new_count = if let Some(val) = self.global_count.get_mut(raw_name) {
+                    *val += 1;
+                    *val
+                } else {
+                    self.global_count.insert(raw_name.clone(), 1);
+                    1
+                };
+
+                (self.module_id.clone(), format!("{}:{}", new_count, raw_name))
             }
         };
 
-        node.unresolved.insert(raw, resolved.clone());
+        layer.symbols.insert(raw_name.clone(), resolved_name.clone());
+        Ok(resolved_name)
+    }
 
-        Ok(resolved)
+    /*
+    * Looks for a name in the current and previous scopes and returns the resolved name. This is used for references.
 
+    If allow_future_binding is true, the name can be unresolved in the current scope but bound later. This can be useful for structs with recursive definitions.
+     */
+    pub fn scope_lookup(&mut self, raw_name: &RawName, allow_future_binding: bool) -> NameResolutionResult<ResolvedName> {
+        for layer in self.stack.iter().rev() {
+            if let Some(resolved_name) = layer.symbols.get(raw_name) {
+                return Ok(resolved_name.clone());
+            }
+        }
+
+        if allow_future_binding {
+            let layer = self.stack.last_mut().unwrap();
+            layer.unresolved.insert(raw_name.clone());
+            Ok(self.scope_bind(raw_name, true, None)?)
+
+        } else {
+            Err(UndefinedLookup(raw_name.clone()))
+        }
     }
 }

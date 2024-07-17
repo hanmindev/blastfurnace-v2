@@ -1,6 +1,7 @@
 mod scope_table;
 mod visitor;
 
+use std::collections::{HashMap, HashSet};
 use crate::front::ast_types::{ASTFile, Definition, RawName, ResolvedName};
 use crate::front::passes::name_resolution::scope_table::{ScopeTable};
 use crate::front::passes::visitor::Visitable;
@@ -9,7 +10,9 @@ use crate::modules::{ModuleId};
 #[derive(Debug, PartialEq)]
 pub enum NameResolutionError {
     UndefinedVariable(String),
-    Redefinition(RawName, ResolvedName),
+    Redefinition(RawName),
+    UnresolvedNames(HashSet<RawName>),
+    UndefinedLookup(RawName),
 }
 
 type NameResolutionResult<T> = Result<T, NameResolutionError>;
@@ -24,17 +27,18 @@ pub fn resolve_names(
     mut astfile: ASTFile, // the ASTFile containing the definitions
 ) -> Result<Vec<Definition>, NameResolutionError> {
     let mut scope_table = ScopeTable::new(module_id);
-
+    scope_table.scope_enter();
 
     // load the "use" statements into the scope table. There should not be any duplicates
     for (raw_name, resolved_name) in astfile.uses.drain(0..) {
-        scope_table.scope_bind_pre_made_name(raw_name, resolved_name)?;
+        scope_table.scope_bind(&raw_name, true, Some(resolved_name))?;
     }
 
     // then we visit each definition in the ASTFile
     for definition in astfile.definitions.iter_mut() {
         definition.visit(&mut scope_table)?;
     }
+    scope_table.scope_exit()?;
 
     Ok(astfile.definitions)
 }
@@ -42,52 +46,45 @@ pub fn resolve_names(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
-    use crate::front::ast_types::{Definition, StructDef, Type, TypeReference, VarDef, VarReference};
+    use crate::front::ast_creator::create_ast;
+    use crate::front::ast_types::{Definition, Type};
     use crate::modules::ModuleId;
 
     use super::*;
 
     #[test]
-    fn test_name_resolution() {
-        let module_id = ModuleId::from("module_a");
-        let mut ast_file: ASTFile = ASTFile {
-            uses: vec![],
-            definitions: vec![
-                Definition::StructDef(StructDef {
-                    name: TypeReference::new("struct_a".to_string()),
-                    field_types: HashMap::new(),
-                }),
-                Definition::StructDef(StructDef {
-                    name: TypeReference::new("struct_b".to_string()),
-                    field_types: {
-                        let mut field_types = HashMap::new();
-                        field_types.insert(
-                            "field_a".to_string(),
-                            Type::Struct(TypeReference::new("struct_a".to_string())),
-                        );
-                        field_types.insert("field_b".to_string(), Type::Int);
-                        field_types
-                    },
-                }),
-                Definition::VarDef(VarDef {
-                    name: VarReference::new("var_a".to_string()),
-                    ty: Type::Struct(TypeReference::new("struct_b".to_string())),
-                }),
-            ],
-        };
+    fn test_circular_struct_name_resolution() {
+        let current_package = "package_a";
+        let src = r#"
+        struct struct_a {
+            field_a: struct_b,
+        }
 
-        let result = resolve_names(module_id.clone(), ast_file);
-        assert_eq!(result.is_ok(), true);
-        let definitions = result.unwrap();
+        struct struct_b {
+            field_a: struct_a,
+        }
+        "#;
+        let ast_file = create_ast(current_package, src);
+
+        let module_id = ModuleId::from("module_a");
+
+        let definitions = resolve_names(module_id.clone(), ast_file).unwrap();
 
         match definitions[0] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
-                    struct_def.name.resolved,
-                    Some((module_id.clone(), "0:struct_a".to_string()))
+                    Some((module_id.clone(), "struct_a".to_string())),
+                    struct_def.name.resolved
                 );
+                match struct_def.field_types["field_a"] {
+                    Type::Struct(ref type_ref) => {
+                        assert_eq!(
+                            type_ref.resolved,
+                            Some((module_id.clone(), "struct_b".to_string()))
+                        );
+                    }
+                    _ => panic!("Expected Struct"),
+                }
             }
             _ => panic!("Expected StructDef"),
         }
@@ -95,14 +92,14 @@ mod tests {
         match definitions[1] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
-                    struct_def.name.resolved,
-                    Some((module_id.clone(), "0:struct_b".to_string()))
+                    Some((module_id.clone(), "struct_b".to_string())),
+                    struct_def.name.resolved
                 );
                 match struct_def.field_types["field_a"] {
                     Type::Struct(ref type_ref) => {
                         assert_eq!(
                             type_ref.resolved,
-                            Some((module_id.clone(), "0:struct_a".to_string()))
+                            Some((module_id.clone(), "struct_a".to_string()))
                         );
                     }
                     _ => panic!("Expected Struct"),
@@ -110,24 +107,24 @@ mod tests {
             }
             _ => panic!("Expected StructDef"),
         }
-
-        match definitions[2] {
-            Definition::VarDef(ref var_def) => {
-                assert_eq!(
-                    var_def.name.resolved,
-                    Some((module_id.clone(), "0:var_a".to_string()))
-                );
-                match var_def.ty {
-                    Type::Struct(ref type_ref) => {
-                        assert_eq!(
-                            type_ref.resolved,
-                            Some((module_id.clone(), "0:struct_b".to_string()))
-                        );
-                    }
-                    _ => panic!("Expected Struct"),
-                }
-            }
-            _ => panic!("Expected VarDef"),
+    }
+    #[test]
+    fn test_unresolved_struct_name_resolution() {
+        let current_package = "package_a";
+        let src = r#"
+        struct struct_a {
+            field_a: struct_b,
         }
+        "#;
+        let ast_file = create_ast(current_package, src);
+
+        let module_id = ModuleId::from("module_a");
+
+        let err = resolve_names(module_id.clone(), ast_file);
+
+        assert_eq!(
+            err,
+            Err(NameResolutionError::UnresolvedNames(HashSet::from_iter(vec!["struct_b".to_string()])))
+        );
     }
 }
