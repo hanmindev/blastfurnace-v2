@@ -16,6 +16,7 @@ pub enum TokenKind {
 
     // definition declaration
     Static,
+    Let,
     Struct,
     Fn,
 

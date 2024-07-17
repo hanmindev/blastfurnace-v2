@@ -1,8 +1,5 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
-use crate::front::ast_types::{
-    ASTFile, Definition, FnDef, FunctionReference, RawName, ResolvedName, StructDef, Type,
-    TypeReference, VarDef, VarReference,
-};
+use crate::front::ast_types::{ASTFile, Definition, FnDef, FunctionReference, RawName, ResolvedName, StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference};
 use crate::modules::module_id_from_local;
 use camino::Utf8PathBuf;
 use std::cmp::min;
@@ -90,12 +87,12 @@ impl Parser {
                 }
                 TokenKind::Static => {
                     let definition = self.parse_static_var_definition()?;
-                    module.definitions.push(Definition::VarDef(definition));
+                    module.definitions.push(Definition::StaticVarDef(definition));
                 }
                 TokenKind::Eof => {
                     break;
                 }
-                _ => {
+                TokenKind::Let | _ => { // this is added to explicitly show that we are ignoring Let s
                     return Err(ParseError::Unexpected(
                         self.get_token().clone(),
                         "Cannot be used for top level".to_string(),
@@ -221,8 +218,7 @@ impl Parser {
         }
     }
 
-    fn parse_static_var_definition(&mut self) -> ParseResult<VarDef> {
-        self.eat(&TokenKind::Static)?;
+    fn parse_var_definition_helper(&mut self) -> ParseResult<(VarReference, Type)> {
         if let TokenKind::Ident(variable_name) = self.eat_any() {
             let variable_name = variable_name.clone();
 
@@ -231,16 +227,31 @@ impl Parser {
             let ty = self.parse_type()?;
 
             self.eat(&TokenKind::SemiColon)?;
-            Ok(VarDef {
-                name: VarReference::new(variable_name),
-                ty,
-            })
+            Ok((VarReference::new(variable_name), ty))
         } else {
             Err(ParseError::Unexpected(
                 self.get_token().clone(),
                 "Expected ident".to_string(),
             ))
         }
+    }
+
+    fn parse_var_definition(&mut self) -> ParseResult<VarDef> {
+        self.eat(&TokenKind::Let)?;
+        let var_def = self.parse_var_definition_helper()?;
+        Ok(VarDef {
+            name: var_def.0,
+            ty: var_def.1,
+        })
+    }
+
+    fn parse_static_var_definition(&mut self) -> ParseResult<StaticVarDef> {
+        self.eat(&TokenKind::Static)?;
+        let var_def = self.parse_var_definition_helper()?;
+        Ok(StaticVarDef {
+            name: var_def.0,
+            ty: var_def.1,
+        })
     }
 
     // maps

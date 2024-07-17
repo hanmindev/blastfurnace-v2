@@ -59,6 +59,12 @@ pub enum Type {
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct StaticVarDef {
+    pub name: VarReference,
+    pub ty: Type,
+}
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct VarDef {
     pub name: VarReference,
     pub ty: Type,
@@ -80,6 +86,7 @@ pub struct FnDef {
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Definition {
+    StaticVarDef(StaticVarDef),
     VarDef(VarDef),
     StructDef(StructDef),
     FnDef(FnDef),

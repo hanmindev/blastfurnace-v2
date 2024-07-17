@@ -20,7 +20,11 @@ impl Visitor<(), NameResolutionError> for ScopeTable {
                     }
                     false
                 }
-
+                ASTNodeEnum::StaticVarDef(def) => {
+                    def.name.resolved = Some(self.scope_bind(&def.name.raw, true, None)?);
+                    def.ty.visit(self)?;
+                    false
+                }
                 ASTNodeEnum::VarDef(def) => {
                     def.name.resolved = Some(self.scope_bind(&def.name.raw, false, None)?);
                     def.ty.visit(self)?;
