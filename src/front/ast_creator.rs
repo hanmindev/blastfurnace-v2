@@ -126,7 +126,7 @@ mod tests {
                 body: Module {
                     uses: Some(vec![]),
                     definitions: vec![],
-                }
+                },
             })],
         };
 
@@ -160,7 +160,7 @@ mod tests {
                 body: Module {
                     uses: Some(vec![]),
                     definitions: vec![],
-                }
+                },
             })],
         };
 
@@ -179,20 +179,18 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![
-                Definition::FnDef(FnDef {
-                    return_type: Type::Void,
-                    name: FunctionReference::new("fn_a".to_string()),
-                    args: vec![],
-                    body: Module {
+            definitions: vec![Definition::FnDef(FnDef {
+                return_type: Type::Void,
+                name: FunctionReference::new("fn_a".to_string()),
+                args: vec![],
+                body: Module {
+                    uses: Some(vec![]),
+                    definitions: vec![Definition::Scope(Module {
                         uses: Some(vec![]),
-                        definitions: vec![Definition::Scope(Module {
-                            uses: Some(vec![]),
-                            definitions: vec![],
-                        })],
-                    }
-                }),
-            ],
+                        definitions: vec![],
+                    })],
+                },
+            })],
         };
 
         let ast = create_ast(current_package, src);

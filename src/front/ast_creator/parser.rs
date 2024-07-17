@@ -1,4 +1,5 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
+use crate::front::ast_types::Type::Void;
 use crate::front::ast_types::{
     Definition, FnDef, FunctionReference, Module, RawName, ResolvedName, StaticVarDef, StructDef,
     Type, TypeReference, VarDef, VarReference,
@@ -8,8 +9,6 @@ use camino::Utf8PathBuf;
 use std::cmp::min;
 use std::collections::HashMap;
 use std::mem;
-use crate::front::ast_creator::token_types::TokenKind::TVoid;
-use crate::front::ast_types::Type::Void;
 
 pub fn parse_tokens(package_name: &str, tokens: Vec<Token>) -> ParseResult<Module> {
     let mut parser = Parser::new(tokens);
