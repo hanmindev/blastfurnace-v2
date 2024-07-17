@@ -96,3 +96,8 @@ pub struct RawNameModule {
     pub uses: Vec<(RawName, ResolvedName)>,
     pub definitions: Vec<Definition>,
 }
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ResolvedNameModule {
+    pub definitions: Vec<Definition>,
+}

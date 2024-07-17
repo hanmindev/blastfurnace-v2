@@ -110,6 +110,47 @@ impl Parser {
         Ok(module)
     }
 
+    fn parse_intermediate_level(&mut self, package_name: &str) -> ParseResult<RawNameModule> {
+        let mut module = RawNameModule {
+            uses: Default::default(),
+            definitions: Default::default(),
+        };
+
+        loop {
+            match self.peek(0) {
+                TokenKind::Use => {
+                    module.uses.extend(self.parse_use(package_name)?);
+                }
+                TokenKind::Fn => {
+                    let definition = self.parse_fn_definition()?;
+                    module.definitions.push(Definition::FnDef(definition));
+                }
+                TokenKind::Struct => {
+                    let definition = self.parse_struct_definition()?;
+                    module.definitions.push(Definition::StructDef(definition));
+                }
+                TokenKind::Let => {
+                    let definition = self.parse_var_definition()?;
+                    module
+                        .definitions
+                        .push(Definition::VarDef(definition));
+                }
+                TokenKind::Eof => {
+                    break;
+                }
+                TokenKind::Static | _ => {
+                    // this is added to explicitly show that we are ignoring Static s
+                    return Err(ParseError::Unexpected(
+                        self.get_token().clone(),
+                        "Cannot be used for top level".to_string(),
+                    ));
+                }
+            }
+        }
+
+        Ok(module)
+    }
+
     fn parse_type(&mut self) -> ParseResult<Type> {
         Ok(match self.eat_any() {
             TokenKind::TVoid => Type::Void,

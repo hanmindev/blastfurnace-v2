@@ -1,7 +1,7 @@
 mod scope_table;
 mod visitor;
 
-use crate::front::ast_types::{RawNameModule, Definition, RawName};
+use crate::front::ast_types::{RawNameModule, Definition, RawName, ResolvedNameModule};
 use crate::front::passes::name_resolution::scope_table::ScopeTable;
 use crate::front::passes::visitor::Visitable;
 use crate::modules::ModuleId;
@@ -24,23 +24,25 @@ type NameResolutionResult<T> = Result<T, NameResolutionError>;
  */
 pub fn resolve_names(
     module_id: ModuleId,  // id of the module we are resolving names for
-    mut astfile: RawNameModule, // the ASTFile containing the definitions
-) -> Result<Vec<Definition>, NameResolutionError> {
+    mut raw_name_module: RawNameModule, // the ASTFile containing the definitions
+) -> Result<ResolvedNameModule, NameResolutionError> {
     let mut scope_table = ScopeTable::new(module_id);
     scope_table.scope_enter();
 
     // load the "use" statements into the scope table. There should not be any duplicates
-    for (raw_name, resolved_name) in astfile.uses.drain(0..) {
+    for (raw_name, resolved_name) in raw_name_module.uses.drain(0..) {
         scope_table.scope_bind(&raw_name, true, Some(resolved_name))?;
     }
 
     // then we visit each definition in the ASTFile
-    for definition in astfile.definitions.iter_mut() {
+    for definition in raw_name_module.definitions.iter_mut() {
         definition.visit(&mut scope_table)?;
     }
     scope_table.scope_exit()?;
 
-    Ok(astfile.definitions)
+    Ok(ResolvedNameModule {
+        definitions: raw_name_module.definitions,
+    })
 }
 
 #[cfg(test)]
