@@ -1,26 +1,30 @@
 mod ast_creator;
 pub mod ast_types;
 mod passes;
+pub mod definition_table;
 
 use crate::front::ast_creator::create_ast;
-use crate::front::ast_types::{Definition, FullItemPath};
+use crate::front::ast_types::FullItemPath;
 use crate::front::passes::name_resolution::resolve_names;
 use crate::modules::ModuleDependencies;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
+use crate::front::definition_table::{collect_definitions, DefinitionTable};
 
 pub fn parse_file(
     module_path: FullItemPath,
     file_contents: &str,
-) -> (ModuleDependencies, DefinitionMap) {
+) -> (ModuleDependencies, DefinitionTable) {
     let mut module = create_ast(&module_path.package_name, file_contents);
 
     // TODO: error handling
-    let _definitions = resolve_names(module_path, &mut module).unwrap();
+    resolve_names(module_path, &mut module).unwrap();
 
+    // TODO: get this information
     let _module_dependencies: ModuleDependencies = HashSet::new();
-    let _definitions: DefinitionMap;
+
+
+    let definition_table = collect_definitions(&mut module);
+
 
     todo!()
 }
-
-pub type DefinitionMap = HashMap<String, Definition>;
