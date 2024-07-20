@@ -374,10 +374,11 @@ impl Parser {
                             if let TokenKind::Ident(ident) =
                                 self.eat(&TokenKind::Ident("".to_string()))?
                             {
+                                let mut path = path.clone();
                                 path.push(ident.clone());
                                 res.push((
                                     (ident.clone(), None),
-                                    FullItemPath::new(package_name.clone(), path.clone()),
+                                    FullItemPath::new(package_name.clone(), path),
                                 ));
                                 if self.eat(&TokenKind::Comma).is_err() {
                                     break;
