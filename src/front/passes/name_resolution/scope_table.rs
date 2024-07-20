@@ -21,7 +21,7 @@ fn stitch_path(
         }
     }
 
-    let item = full_item_path.item_path.pop().unwrap(); // TODO: error handling
+    let item = full_item_path.item_path.pop().unwrap_or("".to_string());
     return (
         module_id_from_local(&full_item_path.package_name, &full_item_path.item_path),
         item,
