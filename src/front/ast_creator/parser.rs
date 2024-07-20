@@ -1,13 +1,9 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
-use crate::front::ast_types::Type::Void;
-use crate::front::ast_types::{
-    Definition, FnDef, FunctionReference, Module, RawName, ResolvedName, StaticVarDef, StructDef,
-    Type, TypeReference, VarDef, VarReference,
-};
+use crate::front::ast_types::{Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, RawNameTailNode, ResolvedName, StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference};
 use crate::modules::module_id_from_local;
 use camino::Utf8PathBuf;
 use std::cmp::min;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::mem;
 
 pub fn parse_tokens(package_name: &str, tokens: Vec<Token>) -> ParseResult<Module> {
@@ -163,11 +159,34 @@ impl Parser {
         Ok(module)
     }
 
+    fn parse_reference_name(&mut self, head: &str) -> ParseResult<RawName> {
+        let mut nodes = vec![];
+        loop {
+            if self.eat(&TokenKind::DoubleColon).is_err() {
+                break;
+            }
+            if let TokenKind::Ident(ident) = self.eat(&TokenKind::Ident("".to_string()))? {
+                nodes.push(ident.clone());
+            } else {
+                unreachable!("Can't happen");
+            }
+        }
+        Ok((head.to_string(), if nodes.is_empty() {
+            None
+        } else {
+            Some(nodes)
+        }))
+    }
+
     fn parse_type(&mut self) -> ParseResult<Type> {
         Ok(match self.eat_any() {
             TokenKind::TVoid => Type::Void,
             TokenKind::TInt => Type::Int,
-            TokenKind::Ident(ident) => Type::Struct(TypeReference::new(ident.clone())),
+            TokenKind::Ident(head) => {
+                let head_cpy = head.clone();
+                let raw_name = self.parse_reference_name(&head_cpy)?;
+                Type::Struct(TypeReference::new(raw_name))
+            }
             _ => {
                 return Err(ParseError::Unexpected(
                     self.get_token().clone(),
@@ -196,7 +215,7 @@ impl Parser {
                     let ty = self.parse_type()?;
 
                     args.push(VarDef {
-                        name: VarReference::new(arg_name),
+                        name: VarReference::new((arg_name, None)),
                         ty,
                     });
 
@@ -216,14 +235,14 @@ impl Parser {
             let return_type = if self.eat(&TokenKind::Arrow).is_ok() {
                 self.parse_type()?
             } else {
-                Void
+                Type::Void
             };
 
             let body = self.parse_intermediate_level(package_name)?;
 
             Ok(FnDef {
                 return_type,
-                name: FunctionReference::new(fn_name),
+                name: FunctionReference::new((fn_name, None)),
                 args,
                 body,
             })
@@ -269,7 +288,7 @@ impl Parser {
 
             self.eat(&TokenKind::RBrace)?;
             Ok(StructDef {
-                name: TypeReference::new(struct_name),
+                name: TypeReference::new((struct_name, None)),
                 field_types,
             })
         } else {
@@ -289,7 +308,7 @@ impl Parser {
             let ty = self.parse_type()?;
 
             self.eat(&TokenKind::SemiColon)?;
-            Ok((VarReference::new(variable_name), ty))
+            Ok((VarReference::new((variable_name, None)), ty))
         } else {
             Err(ParseError::Unexpected(
                 self.get_token().clone(),
@@ -317,7 +336,7 @@ impl Parser {
     }
 
     // maps
-    fn parse_use(&mut self, package_name: &str) -> ParseResult<Vec<(RawName, ResolvedName)>> {
+    fn parse_use(&mut self, package_name: &str) -> ParseResult<Vec<(RawName, FullItemPath)>> {
         self.eat(&TokenKind::Use)?;
 
         if let TokenKind::Ident(use_package_name) = self.eat_any() {
@@ -329,7 +348,7 @@ impl Parser {
 
             let mut res = vec![];
 
-            let mut path = Utf8PathBuf::new();
+            let mut path = vec![];
             self.eat(&TokenKind::DoubleColon)?;
 
             loop {
@@ -338,8 +357,8 @@ impl Parser {
                         let ident = ident.clone();
                         if self.peek(0) == &TokenKind::SemiColon {
                             res.push((
-                                ident.clone(),
-                                (module_id_from_local(&package_name, &path), ident.clone()),
+                                (ident.clone(), None),
+                                (package_name, path, ident.clone()),
                             ));
                             break;
                         } else {
@@ -353,8 +372,8 @@ impl Parser {
                                 self.eat(&TokenKind::Ident("".to_string()))?
                             {
                                 res.push((
-                                    ident.clone(),
-                                    (module_id_from_local(&package_name, &path), ident.clone()),
+                                    (ident.clone(), None),
+                                    (package_name.clone(), path.clone(), ident.clone()),
                                 ));
                                 if self.eat(&TokenKind::Comma).is_err() {
                                     break;

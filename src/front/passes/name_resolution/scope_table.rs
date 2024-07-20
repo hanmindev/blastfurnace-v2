@@ -1,27 +1,57 @@
-use crate::front::ast_types::{RawName, ResolvedName};
+use crate::front::ast_types::{FullItemPath, ItemName, ItemPath, PackageName, RawName, RawNameRoot, RawNameTailNode, ResolvedName};
 use crate::front::passes::name_resolution::NameResolutionError::UndefinedLookup;
 use crate::front::passes::name_resolution::{NameResolutionError, NameResolutionResult};
-use crate::modules::ModuleId;
+use crate::modules::{module_id_from_local, ModuleId};
 use std::collections::{HashMap, HashSet};
+use camino::Utf8PathBuf;
+
+fn item_path_to_buf(item_path: &ItemPath) -> Utf8PathBuf {
+    let mut buf = Utf8PathBuf::new();
+    for item in item_path {
+        buf.push(item);
+    }
+    buf
+}
+
+
+fn stitch_path(full_item_path: FullItemPath, mut tail: &Option<Vec<RawNameTailNode>>) -> ResolvedName {
+    let (package_name, mut item_path, item) = full_item_path;
+
+    if let Some(tail_unwrap) = tail {
+        if tail_unwrap.len() != 0 {
+            item_path.push(item);
+
+            for i in 0..tail_unwrap.len() - 1 {
+                item_path.push(tail_unwrap[i].clone());
+            }
+
+            return (module_id_from_local(&package_name, &item_path_to_buf(&item_path)), tail_unwrap.last().unwrap().clone());
+        }
+    }
+
+    return (module_id_from_local(&package_name, &item_path_to_buf(&item_path)), item);
+}
 
 struct ScopeTableLayer {
-    // maps the raw name to the resolved name
-    symbols: HashMap<RawName, ResolvedName>,
+    // maps the raw name to the full item path
+    symbols: HashMap<RawNameRoot, FullItemPath>,
     // contains the raw names that were referenced but were not bound. If they get bound later, they will move to the symbols map.
-    unresolved: HashSet<RawName>,
+    unresolved: HashSet<RawNameRoot>,
 }
 
 pub struct ScopeTable {
     module_id: ModuleId,
+    module_path: FullItemPath,
     stack: Vec<ScopeTableLayer>,
 
-    global_count: HashMap<RawName, i32>,
+    global_count: HashMap<RawNameRoot, i32>,
 }
 
 impl ScopeTable {
-    pub fn new(module_id: ModuleId) -> ScopeTable {
+    pub fn new(module_id: ModuleId, module_path: FullItemPath) -> ScopeTable {
         ScopeTable {
             module_id,
+            module_path,
             stack: vec![],
             global_count: HashMap::new(),
         }
@@ -52,9 +82,9 @@ impl ScopeTable {
      */
     pub fn scope_bind(
         &mut self,
-        raw_name: &RawName,
+        raw_name: &RawNameRoot,
         first_in_scope: bool,
-        force_name: Option<ResolvedName>,
+        force_name: Option<FullItemPath>,
     ) -> NameResolutionResult<ResolvedName> {
         let mut force_name = force_name;
         let size = self.stack.len();
@@ -72,7 +102,7 @@ impl ScopeTable {
             }
         }
 
-        let resolved_name = match force_name {
+        let full_path = match force_name {
             Some(name) => name,
             None => {
                 let new_count = if let Some(val) = self.global_count.get_mut(raw_name) {
@@ -83,17 +113,18 @@ impl ScopeTable {
                     0
                 };
 
-                (
-                    self.module_id.clone(),
-                    format!("{}:{}:{}", size - 1, new_count, raw_name),
-                )
+                let mut path = self.module_path.clone();
+                path.1.push(path.2);
+                path.2 = format!("{}:{}:{}", size - 1, new_count, raw_name);
+
+                path
             }
         };
 
         layer
             .symbols
-            .insert(raw_name.clone(), resolved_name.clone());
-        Ok(resolved_name)
+            .insert(raw_name.clone(), full_path.clone());
+        Ok(stitch_path(full_path, &None))
     }
 
     /*
@@ -106,18 +137,21 @@ impl ScopeTable {
         raw_name: &RawName,
         allow_future_binding: bool,
     ) -> NameResolutionResult<ResolvedName> {
+        let raw_name_root: RawNameRoot = raw_name.0.clone();
+
+
         for layer in self.stack.iter().rev() {
-            if let Some(resolved_name) = layer.symbols.get(raw_name) {
-                return Ok(resolved_name.clone());
+            if let Some(full_item_path) = layer.symbols.get(&raw_name_root) {
+                return Ok(stitch_path(full_item_path.clone(), &raw_name.1));
             }
         }
 
         if allow_future_binding {
             let layer = self.stack.last_mut().unwrap();
-            layer.unresolved.insert(raw_name.clone());
-            Ok(self.scope_bind(raw_name, true, None)?)
+            layer.unresolved.insert(raw_name_root.clone());
+            Ok(self.scope_bind(&raw_name_root, true, None)?)
         } else {
-            Err(UndefinedLookup(raw_name.clone()))
+            Err(UndefinedLookup(raw_name_root.clone()))
         }
     }
 }

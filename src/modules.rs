@@ -112,7 +112,8 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                     .or(Err(ModuleBuildError::FileReadError))?;
 
                 let (direct_deps, definitions) =
-                    parse_file(&node.package_name, module_id, &file_content);
+                    parse_file(&node.package_name, module_id, ("pkg".to_string(), vec![], "module_a".to_string()), &file_content);
+                // TODO:
 
                 Some(ModuleCachableData {
                     read_on: age,

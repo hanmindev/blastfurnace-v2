@@ -1,9 +1,10 @@
 use crate::modules::ModuleId;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fmt;
 use std::fmt::Debug;
 use std::marker::PhantomData;
+use camino::Utf8PathBuf;
 
 // Reference<T, R> type idea from https://thume.ca/2019/04/18/writing-a-compiler-in-rust/
 #[derive(PartialEq, Clone, Serialize, Deserialize)]
@@ -33,8 +34,15 @@ impl<T: Debug, R: Debug, D> Debug for Reference<T, R, D> {
     }
 }
 
-pub type RawName = String;
-pub type ResolvedName = (ModuleId, String);
+
+pub type FullItemPath = (PackageName, ItemPath, ItemName);
+pub type PackageName = String;
+pub type ItemPath = Vec<String>;
+pub type RawNameRoot = String;
+pub type RawNameTailNode = String;
+pub type RawName = (RawNameRoot, Option<Vec<RawNameTailNode>>);
+pub type ItemName = String;
+pub type ResolvedName = (ModuleId, ItemName);
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct VarDummy;
@@ -94,6 +102,6 @@ pub enum Definition {
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Module {
-    pub uses: Option<Vec<(RawName, ResolvedName)>>,
+    pub uses: Option<Vec<(RawName, FullItemPath)>>,
     pub definitions: Vec<Definition>,
 }
