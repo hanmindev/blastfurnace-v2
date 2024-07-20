@@ -33,8 +33,29 @@ impl<T: Debug, R: Debug, D> Debug for Reference<T, R, D> {
     }
 }
 
-pub type RawName = String;
-pub type ResolvedName = (ModuleId, String);
+pub type PackageName = String;
+pub type ItemPath = Vec<String>;
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct FullItemPath {
+    pub package_name: PackageName,
+    pub item_path: ItemPath,
+}
+
+impl FullItemPath {
+    pub fn new(package_name: PackageName, item_path: ItemPath) -> FullItemPath {
+        FullItemPath {
+            package_name,
+            item_path,
+        }
+    }
+}
+
+pub type RawNameRoot = String;
+pub type RawNameTailNode = String;
+pub type RawName = (RawNameRoot, Option<Vec<RawNameTailNode>>);
+pub type ItemName = String;
+pub type ResolvedName = (ModuleId, ItemName);
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct VarDummy;
@@ -94,6 +115,6 @@ pub enum Definition {
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Module {
-    pub uses: Option<Vec<(RawName, ResolvedName)>>,
+    pub uses: Option<Vec<(RawName, FullItemPath)>>,
     pub definitions: Vec<Definition>,
 }

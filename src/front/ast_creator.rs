@@ -17,8 +17,8 @@ pub fn create_ast(file_root_package_name: &str, src: &str) -> Module {
 mod tests {
     use crate::front::ast_creator::create_ast;
     use crate::front::ast_types::{
-        Definition, FnDef, FunctionReference, Module, StaticVarDef, StructDef, Type, TypeReference,
-        VarDef, VarReference,
+        Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, StaticVarDef,
+        StructDef, Type, TypeReference, VarDef, VarReference,
     };
     use camino::Utf8PathBuf;
     use std::collections::HashMap;
@@ -32,26 +32,56 @@ mod tests {
         use package_b::path::path2::{struct_d, struct_e};
         "#;
 
-        let uses = vec![
+        let uses: Vec<(RawName, FullItemPath)> = vec![
             (
-                "struct_a".to_string(),
-                ("package_a:".to_string(), "struct_a".to_string()),
+                ("struct_a".to_string(), None),
+                FullItemPath::new(
+                    "package_a".to_string(),
+                    vec!["struct_a"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                ),
             ),
             (
-                "struct_b".to_string(),
-                ("package_a:path\\path2".to_string(), "struct_b".to_string()),
+                ("struct_b".to_string(), None),
+                FullItemPath::new(
+                    "package_a".to_string(),
+                    vec!["path", "path2", "struct_b"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                ),
             ),
             (
-                "struct_c".to_string(),
-                ("package_a:path\\path2".to_string(), "struct_c".to_string()),
+                ("struct_c".to_string(), None),
+                FullItemPath::new(
+                    "package_a".to_string(),
+                    vec!["path", "path2", "struct_c"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                ),
             ),
             (
-                "struct_d".to_string(),
-                ("package_b:path\\path2".to_string(), "struct_d".to_string()),
+                ("struct_d".to_string(), None),
+                FullItemPath::new(
+                    "package_b".to_string(),
+                    vec!["path", "path2", "struct_d"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                ),
             ),
             (
-                "struct_e".to_string(),
-                ("package_b:path\\path2".to_string(), "struct_e".to_string()),
+                ("struct_e".to_string(), None),
+                FullItemPath::new(
+                    "package_b".to_string(),
+                    vec!["path", "path2", "struct_e"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                ),
             ),
         ];
 
@@ -73,13 +103,13 @@ mod tests {
         let expected = Module {
             uses: Some(vec![]),
             definitions: vec![Definition::StructDef(StructDef {
-                name: TypeReference::new("struct_a".to_string()),
+                name: TypeReference::new(("struct_a".to_string(), None)),
                 field_types: {
                     let mut field_types = HashMap::new();
                     field_types.insert("field_a".to_string(), Type::Int);
                     field_types.insert(
                         "field_b".to_string(),
-                        Type::Struct(TypeReference::new("struct_b".to_string())),
+                        Type::Struct(TypeReference::new(("struct_b".to_string(), None))),
                     );
                     field_types
                 },
@@ -100,7 +130,7 @@ mod tests {
         let expected_ast = Module {
             uses: Some(vec![]),
             definitions: vec![Definition::StaticVarDef(StaticVarDef {
-                name: VarReference::new("val".to_string()),
+                name: VarReference::new(("val".to_string(), None)),
                 ty: Type::Int,
             })],
         };
@@ -121,7 +151,7 @@ mod tests {
             uses: Some(vec![]),
             definitions: vec![Definition::FnDef(FnDef {
                 return_type: Type::Void,
-                name: FunctionReference::new("fn_a".to_string()),
+                name: FunctionReference::new(("fn_a".to_string(), None)),
                 args: vec![],
                 body: Module {
                     uses: Some(vec![]),
@@ -147,12 +177,12 @@ mod tests {
             uses: Some(vec![]),
             definitions: vec![Definition::FnDef(FnDef {
                 return_type: Type::Void,
-                name: FunctionReference::new("fn_a".to_string()),
+                name: FunctionReference::new(("fn_a".to_string(), None)),
                 args: vec![],
                 body: Module {
                     uses: Some(vec![]),
                     definitions: vec![Definition::VarDef(VarDef {
-                        name: VarReference::new("val".to_string()),
+                        name: VarReference::new(("val".to_string(), None)),
                         ty: Type::Int,
                     })],
                 },
@@ -174,16 +204,16 @@ mod tests {
         let expected_ast = Module {
             uses: Some(vec![]),
             definitions: vec![Definition::FnDef(FnDef {
-                return_type: Type::Struct(TypeReference::new("struct_c".to_string())),
-                name: FunctionReference::new("fn_a".to_string()),
+                return_type: Type::Struct(TypeReference::new(("struct_c".to_string(), None))),
+                name: FunctionReference::new(("fn_a".to_string(), None)),
                 args: vec![
                     VarDef {
-                        name: VarReference::new("arg_a".to_string()),
+                        name: VarReference::new(("arg_a".to_string(), None)),
                         ty: Type::Int,
                     },
                     VarDef {
-                        name: VarReference::new("arg_b".to_string()),
-                        ty: Type::Struct(TypeReference::new("struct_b".to_string())),
+                        name: VarReference::new(("arg_b".to_string(), None)),
+                        ty: Type::Struct(TypeReference::new(("struct_b".to_string(), None))),
                     },
                 ],
                 body: Module {
@@ -210,7 +240,7 @@ mod tests {
             uses: Some(vec![]),
             definitions: vec![Definition::FnDef(FnDef {
                 return_type: Type::Void,
-                name: FunctionReference::new("fn_a".to_string()),
+                name: FunctionReference::new(("fn_a".to_string(), None)),
                 args: vec![],
                 body: Module {
                     uses: Some(vec![]),
@@ -244,20 +274,23 @@ mod tests {
             uses: Some(vec![]),
             definitions: vec![Definition::FnDef(FnDef {
                 return_type: Type::Void,
-                name: FunctionReference::new("fn_a".to_string()),
+                name: FunctionReference::new(("fn_a".to_string(), None)),
                 args: vec![],
                 body: Module {
                     uses: Some(vec![]),
                     definitions: vec![Definition::Scope(Module {
                         uses: Some(vec![]),
                         definitions: vec![Definition::StructDef(StructDef {
-                            name: TypeReference::new("struct_a".to_string()),
+                            name: TypeReference::new(("struct_a".to_string(), None)),
                             field_types: {
                                 let mut field_types = HashMap::new();
                                 field_types.insert("field_a".to_string(), Type::Int);
                                 field_types.insert(
                                     "field_b".to_string(),
-                                    Type::Struct(TypeReference::new("struct_b".to_string())),
+                                    Type::Struct(TypeReference::new((
+                                        "struct_b".to_string(),
+                                        None,
+                                    ))),
                                 );
                                 field_types
                             },
