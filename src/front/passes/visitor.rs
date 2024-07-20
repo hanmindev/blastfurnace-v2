@@ -1,5 +1,5 @@
 use crate::front::ast_types::{
-    Definition, FnDef, FunctionReference, Item, Module, Statement, StaticVarDef, StructDef, Type,
+    Definition, FnDef, FunctionReference, Module, Statement, StaticVarDef, StructDef, Type,
     TypeReference, VarDef, VarReference,
 };
 /*
@@ -14,8 +14,6 @@ pub enum ASTNodeEnum<'a> {
     VarReference(&'a mut VarReference),
     TypeReference(&'a mut TypeReference),
     FunctionReference(&'a mut FunctionReference),
-
-    Item(&'a mut Item),
 
     Definition(&'a mut Definition),
 
@@ -128,22 +126,12 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Module {
         let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::Module(self))?;
         if visit_result {
             // skip the uses because name resolution will get rid of it instantly
-            for item in self.items.iter_mut() {
-                item.visit(visitor)?;
+            for definition in self.definitions.iter_mut() {
+                definition.visit(visitor)?;
             }
-        }
-        Ok(res)
-    }
-}
-
-impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Item {
-    fn visit(&mut self, visitor: &mut T) -> Result<Option<K>, V> {
-        let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::Item(self))?;
-        if visit_result {
-            match self {
-                Item::Definition(x) => x.visit(visitor)?,
-                Item::Statement(x) => x.visit(visitor)?,
-            };
+            for statement in self.statements.iter_mut() {
+                statement.visit(visitor)?;
+            }
         }
         Ok(res)
     }

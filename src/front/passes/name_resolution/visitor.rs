@@ -46,7 +46,6 @@ impl Visitor<(), NameResolutionError> for ScopeTable {
                     }
                     false
                 }
-                ASTNodeEnum::Item(_) => true,
                 ASTNodeEnum::Definition(_) => true,
                 ASTNodeEnum::Statement(_) => true,
                 ASTNodeEnum::Module(module) => {
@@ -56,7 +55,7 @@ impl Visitor<(), NameResolutionError> for ScopeTable {
                         self.scope_bind(&raw_name.0, true, Some(resolved_name))?;
                     }
                     // then we visit each definition in the Module
-                    for item in module.items.iter_mut() {
+                    for item in module.definitions.iter_mut() {
                         item.visit(self)?;
                     }
                     self.scope_exit()?;

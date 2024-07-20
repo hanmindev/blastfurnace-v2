@@ -105,12 +105,6 @@ pub struct FnDef {
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub enum Item {
-    Definition(Definition),
-    Statement(Statement),
-}
-
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Definition {
     StaticVarDef(StaticVarDef),
     VarDef(VarDef),
@@ -129,5 +123,6 @@ pub enum Statement {
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Module {
     pub uses: Option<Vec<(RawName, FullItemPath)>>,
-    pub items: Vec<Item>,
+    pub definitions: Vec<Definition>,
+    pub statements: Vec<Statement>,
 }

@@ -35,7 +35,7 @@ pub fn resolve_names(
 #[cfg(test)]
 mod tests {
     use crate::front::ast_creator::create_ast;
-    use crate::front::ast_types::{Definition, Item, Type};
+    use crate::front::ast_types::{Definition, Type};
     use crate::modules::ModuleId;
 
     use super::*;
@@ -128,10 +128,10 @@ mod tests {
             FullItemPath::new(current_package.to_string(), vec!["module_a".to_string()]);
         resolve_names(module_path, &mut module).unwrap();
 
-        let items = module.items;
+        let definitions = module.definitions;
 
-        match items[0] {
-            Item::Definition(Definition::StructDef(ref struct_def)) => {
+        match definitions[0] {
+            (Definition::StructDef(ref struct_def)) => {
                 assert_eq!(
                     Some((module_id.clone(), "0:0:struct_a".to_string())),
                     struct_def.name.resolved
@@ -149,8 +149,8 @@ mod tests {
             _ => panic!("Expected StructDef"),
         }
 
-        match items[1] {
-            Item::Definition(Definition::StructDef(ref struct_def)) => {
+        match definitions[1] {
+            (Definition::StructDef(ref struct_def)) => {
                 assert_eq!(
                     Some((module_id.clone(), "0:0:struct_b".to_string())),
                     struct_def.name.resolved
@@ -236,10 +236,10 @@ mod tests {
             FullItemPath::new(current_package.to_string(), vec!["module_a".to_string()]);
         resolve_names(module_path, &mut module).unwrap();
 
-        let definitions = module.items;
+        let definitions = module.definitions;
 
         match definitions[0] {
-            Item::Definition(Definition::StructDef(ref struct_def)) => {
+            (Definition::StructDef(ref struct_def)) => {
                 assert_eq!(
                     Some((module_id.clone(), "0:0:struct_a".to_string())),
                     struct_def.name.resolved
@@ -249,8 +249,8 @@ mod tests {
         }
 
         match definitions[1] {
-            Item::Definition(Definition::FnDef(ref fn_def)) => match fn_def.body.items[0] {
-                Item::Definition(Definition::StructDef(ref struct_def)) => {
+            (Definition::FnDef(ref fn_def)) => match fn_def.body.definitions[0] {
+                (Definition::StructDef(ref struct_def)) => {
                     assert_eq!(
                         Some((module_id.clone(), "1:0:struct_b".to_string())),
                         struct_def.name.resolved
