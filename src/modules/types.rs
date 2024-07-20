@@ -1,8 +1,8 @@
+use crate::front::definition_table::DefinitionTable;
 use crate::modules::{ModuleDependencies, ModuleId};
 use camino::Utf8PathBuf;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use crate::front::definition_table::DefinitionTable;
 
 // One file gets mapped to one or more modules.
 pub struct ModuleNode {
@@ -19,7 +19,7 @@ pub struct ModuleNode {
 pub struct ModuleCachableData {
     pub read_on: u128,                   // when this data is from
     pub direct_deps: ModuleDependencies, // direct dependencies, used for computing the dependency graph
-    pub definitions: DefinitionTable,      // front-end objects
+    pub definitions: DefinitionTable,    // front-end objects
     pub object: Option<String>,          // the object code created by the back-end
 }
 
