@@ -1,11 +1,16 @@
-use crate::front::ast_types::{FullItemPath, ItemName, ItemPath, PackageName, RawName, RawNameRoot, RawNameTailNode, ResolvedName};
+use crate::front::ast_types::{
+    FullItemPath, RawName, RawNameRoot, RawNameTailNode,
+    ResolvedName,
+};
 use crate::front::passes::name_resolution::NameResolutionError::UndefinedLookup;
 use crate::front::passes::name_resolution::{NameResolutionError, NameResolutionResult};
-use crate::modules::{module_id_from_local, ModuleId};
+use crate::modules::{module_id_from_local, };
 use std::collections::{HashMap, HashSet};
-use camino::Utf8PathBuf;
 
-fn stitch_path(full_item_path: FullItemPath, mut tail: &Option<Vec<RawNameTailNode>>) -> ResolvedName {
+fn stitch_path(
+    full_item_path: FullItemPath,
+    mut tail: &Option<Vec<RawNameTailNode>>,
+) -> ResolvedName {
     let (package_name, mut item_path) = full_item_path;
 
     if let Some(tail_unwrap) = tail {
@@ -14,7 +19,10 @@ fn stitch_path(full_item_path: FullItemPath, mut tail: &Option<Vec<RawNameTailNo
                 item_path.push(tail_unwrap[i].clone());
             }
 
-            return (module_id_from_local(&package_name, &item_path), tail_unwrap.last().unwrap().clone());
+            return (
+                module_id_from_local(&package_name, &item_path),
+                tail_unwrap.last().unwrap().clone(),
+            );
         }
     }
 
@@ -102,15 +110,14 @@ impl ScopeTable {
                 };
 
                 let mut path = self.module_path.clone();
-                path.1.push(format!("{}:{}:{}", size - 1, new_count, raw_name));
+                path.1
+                    .push(format!("{}:{}:{}", size - 1, new_count, raw_name));
 
                 path
             }
         };
 
-        layer
-            .symbols
-            .insert(raw_name.clone(), full_path.clone());
+        layer.symbols.insert(raw_name.clone(), full_path.clone());
         Ok(stitch_path(full_path, &None))
     }
 
@@ -125,7 +132,6 @@ impl ScopeTable {
         allow_future_binding: bool,
     ) -> NameResolutionResult<ResolvedName> {
         let raw_name_root: RawNameRoot = raw_name.0.clone();
-
 
         for layer in self.stack.iter().rev() {
             if let Some(full_item_path) = layer.symbols.get(&raw_name_root) {

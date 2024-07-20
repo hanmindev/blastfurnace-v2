@@ -54,7 +54,9 @@ mod tests {
 
         assert_eq!(
             err,
-            Err(NameResolutionError::Redefinition(RawNameRoot::from("var_a")))
+            Err(NameResolutionError::Redefinition(RawNameRoot::from(
+                "var_a"
+            )))
         );
     }
 
@@ -77,7 +79,9 @@ mod tests {
 
         assert_eq!(
             err,
-            Err(NameResolutionError::Redefinition(RawNameRoot::from("struct_a")))
+            Err(NameResolutionError::Redefinition(RawNameRoot::from(
+                "struct_a"
+            )))
         );
     }
 
@@ -116,7 +120,6 @@ mod tests {
         let mut module = create_ast(current_package, src);
 
         let module_id = ModuleId::from("package_a::module_a");
-
 
         let module_path = (current_package.to_string(), vec!["module_a".to_string()]);
         resolve_names(module_path.clone(), &mut module).unwrap();

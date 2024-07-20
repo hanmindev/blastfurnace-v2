@@ -2,10 +2,10 @@ use crate::file_system::FileSystem;
 use crate::front::parse_file;
 use crate::modules::cache::BuildCacheLayer;
 use crate::modules::types::{ModuleCachableData, ModuleGraph};
+use crate::modules::utf8buf_utils::utf8path_buf_to_vec;
 use camino::{Utf8Path, Utf8PathBuf};
 use std::collections::{HashSet, VecDeque};
 use std::io::Read;
-use crate::modules::utf8buf_utils::utf8path_buf_to_vec;
 
 mod cache;
 mod types;
@@ -115,8 +115,11 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                     .read_to_string(&mut file_content)
                     .or(Err(ModuleBuildError::FileReadError))?;
 
-                let (direct_deps, definitions) =
-                    parse_file(&node.package_name, (node.package_name.clone(), item_path), &file_content);
+                let (direct_deps, definitions) = parse_file(
+                    &node.package_name,
+                    (node.package_name.clone(), item_path),
+                    &file_content,
+                );
                 // TODO:
 
                 Some(ModuleCachableData {
@@ -140,11 +143,12 @@ fn create_rel_path(file_path: &Utf8PathBuf, package_path: &Utf8PathBuf) -> Utf8P
 pub type ModuleId = String;
 
 pub fn module_id_from_local(package_name: &str, file_path: &Vec<String>) -> ModuleId {
-    file_path.iter().fold(package_name.to_string(), |a, b| a + "::" + b)
+    file_path
+        .iter()
+        .fold(package_name.to_string(), |a, b| a + "::" + b)
 }
 
 pub type ModuleDependencies = HashSet<ModuleId>;
-
 
 #[cfg(test)]
 mod tests {

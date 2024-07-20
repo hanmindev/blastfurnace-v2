@@ -1,5 +1,8 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
-use crate::front::ast_types::{Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, RawNameTailNode, ResolvedName, StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference};
+use crate::front::ast_types::{
+    Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, RawNameTailNode,
+    ResolvedName, StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference,
+};
 use crate::modules::module_id_from_local;
 use camino::Utf8PathBuf;
 use std::cmp::min;
@@ -171,11 +174,10 @@ impl Parser {
                 unreachable!("Can't happen");
             }
         }
-        Ok((head.to_string(), if nodes.is_empty() {
-            None
-        } else {
-            Some(nodes)
-        }))
+        Ok((
+            head.to_string(),
+            if nodes.is_empty() { None } else { Some(nodes) },
+        ))
     }
 
     fn parse_type(&mut self) -> ParseResult<Type> {
@@ -357,10 +359,7 @@ impl Parser {
                         let ident = ident.clone();
                         if self.peek(0) == &TokenKind::SemiColon {
                             path.push(ident.clone());
-                            res.push((
-                                (ident.clone(), None),
-                                (package_name, path),
-                            ));
+                            res.push(((ident.clone(), None), (package_name, path)));
                             break;
                         } else {
                             path.push(ident);
