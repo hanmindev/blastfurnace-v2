@@ -5,10 +5,11 @@ mod passes;
 
 use crate::front::ast_creator::create_ast;
 use crate::front::ast_types::FullItemPath;
-use crate::front::definition_table::{collect_definitions, DefinitionTable};
+use crate::front::definition_table::DefinitionTable;
 use crate::front::passes::name_resolution::resolve_names;
 use crate::modules::ModuleDependencies;
 use std::collections::HashSet;
+use crate::front::passes::collect_definitions::collect_definitions;
 
 pub fn parse_file(
     module_path: FullItemPath,
