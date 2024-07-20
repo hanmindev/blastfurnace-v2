@@ -34,9 +34,24 @@ impl<T: Debug, R: Debug, D> Debug for Reference<T, R, D> {
     }
 }
 
-pub type FullItemPath = (PackageName, ItemPath);
 pub type PackageName = String;
 pub type ItemPath = Vec<String>;
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct FullItemPath {
+    pub package_name: PackageName,
+    pub item_path: ItemPath,
+}
+
+impl FullItemPath {
+    pub fn new(package_name: PackageName, item_path: ItemPath) -> FullItemPath {
+        FullItemPath {
+            package_name,
+            item_path,
+        }
+    }
+}
+
 pub type RawNameRoot = String;
 pub type RawNameTailNode = String;
 pub type RawName = (RawNameRoot, Option<Vec<RawNameTailNode>>);

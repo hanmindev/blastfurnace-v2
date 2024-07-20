@@ -1,33 +1,31 @@
-use crate::front::ast_types::{
-    FullItemPath, RawName, RawNameRoot, RawNameTailNode,
-    ResolvedName,
-};
+use crate::front::ast_types::{FullItemPath, RawName, RawNameRoot, RawNameTailNode, ResolvedName};
 use crate::front::passes::name_resolution::NameResolutionError::UndefinedLookup;
 use crate::front::passes::name_resolution::{NameResolutionError, NameResolutionResult};
-use crate::modules::{module_id_from_local, };
+use crate::modules::module_id_from_local;
 use std::collections::{HashMap, HashSet};
 
 fn stitch_path(
-    full_item_path: FullItemPath,
+    mut full_item_path: FullItemPath,
     mut tail: &Option<Vec<RawNameTailNode>>,
 ) -> ResolvedName {
-    let (package_name, mut item_path) = full_item_path;
-
     if let Some(tail_unwrap) = tail {
         if tail_unwrap.len() != 0 {
             for i in 0..tail_unwrap.len() - 1 {
-                item_path.push(tail_unwrap[i].clone());
+                full_item_path.item_path.push(tail_unwrap[i].clone());
             }
 
             return (
-                module_id_from_local(&package_name, &item_path),
+                module_id_from_local(&full_item_path.package_name, &full_item_path.item_path),
                 tail_unwrap.last().unwrap().clone(),
             );
         }
     }
 
-    let item = item_path.pop().unwrap(); // TODO: error handling
-    return (module_id_from_local(&package_name, &item_path), item);
+    let item = full_item_path.item_path.pop().unwrap(); // TODO: error handling
+    return (
+        module_id_from_local(&full_item_path.package_name, &full_item_path.item_path),
+        item,
+    );
 }
 
 struct ScopeTableLayer {
@@ -110,7 +108,7 @@ impl ScopeTable {
                 };
 
                 let mut path = self.module_path.clone();
-                path.1
+                path.item_path
                     .push(format!("{}:{}:{}", size - 1, new_count, raw_name));
 
                 path

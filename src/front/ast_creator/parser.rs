@@ -359,7 +359,10 @@ impl Parser {
                         let ident = ident.clone();
                         if self.peek(0) == &TokenKind::SemiColon {
                             path.push(ident.clone());
-                            res.push(((ident.clone(), None), (package_name, path)));
+                            res.push((
+                                (ident.clone(), None),
+                                FullItemPath::new(package_name, path),
+                            ));
                             break;
                         } else {
                             path.push(ident);
@@ -374,7 +377,7 @@ impl Parser {
                                 path.push(ident.clone());
                                 res.push((
                                     (ident.clone(), None),
-                                    (package_name.clone(), path.clone()),
+                                    FullItemPath::new(package_name.clone(), path.clone()),
                                 ));
                                 if self.eat(&TokenKind::Comma).is_err() {
                                     break;

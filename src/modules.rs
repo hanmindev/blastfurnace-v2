@@ -1,4 +1,5 @@
 use crate::file_system::FileSystem;
+use crate::front::ast_types::FullItemPath;
 use crate::front::parse_file;
 use crate::modules::cache::BuildCacheLayer;
 use crate::modules::types::{ModuleCachableData, ModuleGraph};
@@ -117,10 +118,9 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
 
                 let (direct_deps, definitions) = parse_file(
                     &node.package_name,
-                    (node.package_name.clone(), item_path),
+                    FullItemPath::new(node.package_name.clone(), item_path),
                     &file_content,
                 );
-                // TODO:
 
                 Some(ModuleCachableData {
                     read_on: age,
