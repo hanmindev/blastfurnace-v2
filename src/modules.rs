@@ -117,7 +117,6 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                     .or(Err(ModuleBuildError::FileReadError))?;
 
                 let (direct_deps, definitions) = parse_file(
-                    &node.package_name,
                     FullItemPath::new(node.package_name.clone(), item_path),
                     &file_content,
                 );

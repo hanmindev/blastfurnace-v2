@@ -10,11 +10,10 @@ use std::collections::{HashMap, HashSet};
 use std::io::Read;
 
 pub fn parse_file(
-    package_name: &str,
     module_path: FullItemPath,
     file_contents: &str,
 ) -> (ModuleDependencies, DefinitionMap) {
-    let mut module = create_ast(package_name, file_contents);
+    let mut module = create_ast(&module_path.package_name, file_contents);
 
     // TODO: error handling
     let definitions = resolve_names(module_path, &mut module).unwrap();
