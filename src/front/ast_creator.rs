@@ -20,7 +20,6 @@ mod tests {
         Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, Statement,
         StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference,
     };
-    use camino::Utf8PathBuf;
     use std::collections::HashMap;
 
     #[test]
@@ -92,7 +91,6 @@ mod tests {
     #[test]
     fn test_create_ast_struct() {
         let current_package = "package_a";
-        let current_module_path = Utf8PathBuf::from("foo\\bar");
         let src = r#"
         struct struct_a {
             field_a: int,
@@ -102,18 +100,20 @@ mod tests {
 
         let expected = Module {
             uses: Some(vec![]),
-            definitions: vec![(Definition::StructDef(StructDef {
-                name: TypeReference::new(("struct_a".to_string(), None)),
-                field_types: {
-                    let mut field_types = HashMap::new();
-                    field_types.insert("field_a".to_string(), Type::Int);
-                    field_types.insert(
-                        "field_b".to_string(),
-                        Type::Struct(TypeReference::new(("struct_b".to_string(), None))),
-                    );
-                    field_types
-                },
-            }))],
+            definitions: vec![
+                (Definition::StructDef(StructDef {
+                    name: TypeReference::new(("struct_a".to_string(), None)),
+                    field_types: {
+                        let mut field_types = HashMap::new();
+                        field_types.insert("field_a".to_string(), Type::Int);
+                        field_types.insert(
+                            "field_b".to_string(),
+                            Type::Struct(TypeReference::new(("struct_b".to_string(), None))),
+                        );
+                        field_types
+                    },
+                })),
+            ],
             statements: vec![],
         };
 
@@ -130,10 +130,12 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![(Definition::StaticVarDef(StaticVarDef {
-                name: VarReference::new(("val".to_string(), None)),
-                ty: Type::Int,
-            }))],
+            definitions: vec![
+                (Definition::StaticVarDef(StaticVarDef {
+                    name: VarReference::new(("val".to_string(), None)),
+                    ty: Type::Int,
+                })),
+            ],
             statements: vec![],
         };
 
@@ -151,16 +153,18 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![(Definition::FnDef(FnDef {
-                return_type: Type::Void,
-                name: FunctionReference::new(("fn_a".to_string(), None)),
-                args: vec![],
-                body: Module {
-                    uses: Some(vec![]),
-                    definitions: vec![],
-                    statements: vec![],
-                },
-            }))],
+            definitions: vec![
+                (Definition::FnDef(FnDef {
+                    return_type: Type::Void,
+                    name: FunctionReference::new(("fn_a".to_string(), None)),
+                    args: vec![],
+                    body: Module {
+                        uses: Some(vec![]),
+                        definitions: vec![],
+                        statements: vec![],
+                    },
+                })),
+            ],
             statements: vec![],
         };
 
@@ -179,19 +183,23 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![(Definition::FnDef(FnDef {
-                return_type: Type::Void,
-                name: FunctionReference::new(("fn_a".to_string(), None)),
-                args: vec![],
-                body: Module {
-                    uses: Some(vec![]),
-                    definitions: vec![(Definition::VarDef(VarDef {
-                        name: VarReference::new(("val".to_string(), None)),
-                        ty: Type::Int,
-                    }))],
-                    statements: vec![],
-                },
-            }))],
+            definitions: vec![
+                (Definition::FnDef(FnDef {
+                    return_type: Type::Void,
+                    name: FunctionReference::new(("fn_a".to_string(), None)),
+                    args: vec![],
+                    body: Module {
+                        uses: Some(vec![]),
+                        definitions: vec![
+                            (Definition::VarDef(VarDef {
+                                name: VarReference::new(("val".to_string(), None)),
+                                ty: Type::Int,
+                            })),
+                        ],
+                        statements: vec![],
+                    },
+                })),
+            ],
             statements: vec![],
         };
 
@@ -209,25 +217,27 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![(Definition::FnDef(FnDef {
-                return_type: Type::Struct(TypeReference::new(("struct_c".to_string(), None))),
-                name: FunctionReference::new(("fn_a".to_string(), None)),
-                args: vec![
-                    VarDef {
-                        name: VarReference::new(("arg_a".to_string(), None)),
-                        ty: Type::Int,
+            definitions: vec![
+                (Definition::FnDef(FnDef {
+                    return_type: Type::Struct(TypeReference::new(("struct_c".to_string(), None))),
+                    name: FunctionReference::new(("fn_a".to_string(), None)),
+                    args: vec![
+                        VarDef {
+                            name: VarReference::new(("arg_a".to_string(), None)),
+                            ty: Type::Int,
+                        },
+                        VarDef {
+                            name: VarReference::new(("arg_b".to_string(), None)),
+                            ty: Type::Struct(TypeReference::new(("struct_b".to_string(), None))),
+                        },
+                    ],
+                    body: Module {
+                        uses: Some(vec![]),
+                        definitions: vec![],
+                        statements: vec![],
                     },
-                    VarDef {
-                        name: VarReference::new(("arg_b".to_string(), None)),
-                        ty: Type::Struct(TypeReference::new(("struct_b".to_string(), None))),
-                    },
-                ],
-                body: Module {
-                    uses: Some(vec![]),
-                    definitions: vec![],
-                    statements: vec![],
-                },
-            }))],
+                })),
+            ],
             statements: vec![],
         };
 
@@ -246,20 +256,24 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![(Definition::FnDef(FnDef {
-                return_type: Type::Void,
-                name: FunctionReference::new(("fn_a".to_string(), None)),
-                args: vec![],
-                body: Module {
-                    uses: Some(vec![]),
-                    definitions: vec![],
-                    statements: vec![(Statement::Module(Module {
+            definitions: vec![
+                (Definition::FnDef(FnDef {
+                    return_type: Type::Void,
+                    name: FunctionReference::new(("fn_a".to_string(), None)),
+                    args: vec![],
+                    body: Module {
                         uses: Some(vec![]),
                         definitions: vec![],
-                        statements: vec![],
-                    }))],
-                },
-            }))],
+                        statements: vec![
+                            (Statement::Module(Module {
+                                uses: Some(vec![]),
+                                definitions: vec![],
+                                statements: vec![],
+                            })),
+                        ],
+                    },
+                })),
+            ],
             statements: vec![],
         };
 
@@ -283,34 +297,40 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![(Definition::FnDef(FnDef {
-                return_type: Type::Void,
-                name: FunctionReference::new(("fn_a".to_string(), None)),
-                args: vec![],
-                body: Module {
-                    uses: Some(vec![]),
-                    definitions: vec![],
-                    statements: vec![(Statement::Module(Module {
+            definitions: vec![
+                (Definition::FnDef(FnDef {
+                    return_type: Type::Void,
+                    name: FunctionReference::new(("fn_a".to_string(), None)),
+                    args: vec![],
+                    body: Module {
                         uses: Some(vec![]),
-                        definitions: vec![(Definition::StructDef(StructDef {
-                            name: TypeReference::new(("struct_a".to_string(), None)),
-                            field_types: {
-                                let mut field_types = HashMap::new();
-                                field_types.insert("field_a".to_string(), Type::Int);
-                                field_types.insert(
-                                    "field_b".to_string(),
-                                    Type::Struct(TypeReference::new((
-                                        "struct_b".to_string(),
-                                        None,
-                                    ))),
-                                );
-                                field_types
-                            },
-                        }))],
-                        statements: vec![],
-                    }))],
-                },
-            }))],
+                        definitions: vec![],
+                        statements: vec![
+                            (Statement::Module(Module {
+                                uses: Some(vec![]),
+                                definitions: vec![
+                                    (Definition::StructDef(StructDef {
+                                        name: TypeReference::new(("struct_a".to_string(), None)),
+                                        field_types: {
+                                            let mut field_types = HashMap::new();
+                                            field_types.insert("field_a".to_string(), Type::Int);
+                                            field_types.insert(
+                                                "field_b".to_string(),
+                                                Type::Struct(TypeReference::new((
+                                                    "struct_b".to_string(),
+                                                    None,
+                                                ))),
+                                            );
+                                            field_types
+                                        },
+                                    })),
+                                ],
+                                statements: vec![],
+                            })),
+                        ],
+                    },
+                })),
+            ],
             statements: vec![],
         };
 

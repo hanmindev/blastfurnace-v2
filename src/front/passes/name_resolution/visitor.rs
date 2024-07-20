@@ -32,7 +32,7 @@ impl Visitor<(), NameResolutionError> for ScopeTable {
                 }
                 ASTNodeEnum::FnDef(def) => {
                     def.name.resolved = Some(self.scope_bind(&def.name.raw.0, true, None)?);
-                    for mut var_def in def.args.iter_mut() {
+                    for var_def in def.args.iter_mut() {
                         var_def.visit(self)?;
                     }
                     def.return_type.visit(self)?;

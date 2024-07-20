@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 
 fn stitch_path(
     mut full_item_path: FullItemPath,
-    mut tail: &Option<Vec<RawNameTailNode>>,
+    tail: &Option<Vec<RawNameTailNode>>,
 ) -> ResolvedName {
     if let Some(tail_unwrap) = tail {
         if tail_unwrap.len() != 0 {

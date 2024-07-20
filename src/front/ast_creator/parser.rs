@@ -1,4 +1,4 @@
-use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
+use crate::front::ast_creator::token_types::{Token, TokenKind};
 use crate::front::ast_types::{
     Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, Statement, StaticVarDef,
     StructDef, Type, TypeReference, VarDef, VarReference,
@@ -28,7 +28,7 @@ struct Parser {
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        let mut parser = Self {
+        let parser = Self {
             tokens,
             curr_index: 0,
         };
@@ -131,27 +131,19 @@ impl Parser {
                 }
                 TokenKind::Fn => {
                     let definition = self.parse_fn_definition(package_name)?;
-                    module
-                        .definitions
-                        .push(Definition::FnDef(definition));
+                    module.definitions.push(Definition::FnDef(definition));
                 }
                 TokenKind::Struct => {
                     let definition = self.parse_struct_definition()?;
-                    module
-                        .definitions
-                        .push(Definition::StructDef(definition));
+                    module.definitions.push(Definition::StructDef(definition));
                 }
                 TokenKind::Let => {
                     let definition = self.parse_var_definition()?;
-                    module
-                        .definitions
-                        .push(Definition::VarDef(definition));
+                    module.definitions.push(Definition::VarDef(definition));
                 }
                 TokenKind::LBrace => {
                     let submodule = self.parse_intermediate_level(package_name)?;
-                    module
-                        .statements
-                        .push(Statement::Module(submodule));
+                    module.statements.push(Statement::Module(submodule));
                 }
                 TokenKind::RBrace => {
                     break;
@@ -421,6 +413,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::front::ast_creator::token_types::Span;
 
     #[test]
     fn test_parser_eat() {

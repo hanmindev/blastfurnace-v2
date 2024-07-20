@@ -101,7 +101,7 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for FnDef {
         let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::FnDef(self))?;
         if visit_result {
             self.name.visit(visitor)?;
-            for mut var_def in self.args.iter_mut() {
+            for var_def in self.args.iter_mut() {
                 var_def.visit(visitor)?;
             }
             self.return_type.visit(visitor)?;

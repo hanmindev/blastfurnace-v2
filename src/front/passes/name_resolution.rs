@@ -1,10 +1,10 @@
 mod scope_table;
 mod visitor;
 
-use crate::front::ast_types::{Definition, FullItemPath, Module, RawNameRoot};
+use crate::front::ast_types::{FullItemPath, Module, RawNameRoot};
 use crate::front::passes::name_resolution::scope_table::ScopeTable;
 use crate::front::passes::visitor::Visitable;
-use crate::modules::ModuleId;
+
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq)]
@@ -131,7 +131,7 @@ mod tests {
         let definitions = module.definitions;
 
         match definitions[0] {
-            (Definition::StructDef(ref struct_def)) => {
+            Definition::StructDef(ref struct_def) => {
                 assert_eq!(
                     Some((module_id.clone(), "0:0:struct_a".to_string())),
                     struct_def.name.resolved
@@ -150,7 +150,7 @@ mod tests {
         }
 
         match definitions[1] {
-            (Definition::StructDef(ref struct_def)) => {
+            Definition::StructDef(ref struct_def) => {
                 assert_eq!(
                     Some((module_id.clone(), "0:0:struct_b".to_string())),
                     struct_def.name.resolved
@@ -239,7 +239,7 @@ mod tests {
         let definitions = module.definitions;
 
         match definitions[0] {
-            (Definition::StructDef(ref struct_def)) => {
+            Definition::StructDef(ref struct_def) => {
                 assert_eq!(
                     Some((module_id.clone(), "0:0:struct_a".to_string())),
                     struct_def.name.resolved
@@ -249,8 +249,8 @@ mod tests {
         }
 
         match definitions[1] {
-            (Definition::FnDef(ref fn_def)) => match fn_def.body.definitions[0] {
-                (Definition::StructDef(ref struct_def)) => {
+            Definition::FnDef(ref fn_def) => match fn_def.body.definitions[0] {
+                Definition::StructDef(ref struct_def) => {
                     assert_eq!(
                         Some((module_id.clone(), "1:0:struct_b".to_string())),
                         struct_def.name.resolved
