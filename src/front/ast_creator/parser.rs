@@ -1,12 +1,10 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
 use crate::front::ast_types::{
-    Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, RawNameTailNode,
-    ResolvedName, StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference,
+    Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, StaticVarDef, StructDef,
+    Type, TypeReference, VarDef, VarReference,
 };
-use crate::modules::module_id_from_local;
-use camino::Utf8PathBuf;
 use std::cmp::min;
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::mem;
 
 pub fn parse_tokens(package_name: &str, tokens: Vec<Token>) -> ParseResult<Module> {

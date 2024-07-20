@@ -5,7 +5,7 @@ mod passes;
 use crate::front::ast_creator::create_ast;
 use crate::front::ast_types::{Definition, FullItemPath};
 use crate::front::passes::name_resolution::resolve_names;
-use crate::modules::{ModuleDependencies, ModuleId};
+use crate::modules::ModuleDependencies;
 use std::collections::{HashMap, HashSet};
 use std::io::Read;
 
