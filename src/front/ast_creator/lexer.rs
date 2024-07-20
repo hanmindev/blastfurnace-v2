@@ -1,6 +1,6 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenError, TokenKind};
 use std::collections::VecDeque;
-use std::io::Read;
+
 use std::str::CharIndices;
 
 pub fn get_tokens(src: &str) -> Result<Vec<Token>, Vec<TokenError>> {

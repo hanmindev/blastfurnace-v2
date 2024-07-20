@@ -1,7 +1,7 @@
-use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
+use crate::front::ast_creator::token_types::{Token, TokenKind};
 use crate::front::ast_types::{
-    Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, StaticVarDef, StructDef,
-    Type, TypeReference, VarDef, VarReference,
+    Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, Statement, StaticVarDef,
+    StructDef, Type, TypeReference, VarDef, VarReference,
 };
 use std::cmp::min;
 use std::collections::HashMap;
@@ -28,7 +28,7 @@ struct Parser {
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        let mut parser = Self {
+        let parser = Self {
             tokens,
             curr_index: 0,
         };
@@ -71,6 +71,7 @@ impl Parser {
         let mut module = Module {
             uses: Some(Default::default()),
             definitions: Default::default(),
+            statements: Default::default(),
         };
 
         loop {
@@ -116,6 +117,7 @@ impl Parser {
         let mut module = Module {
             uses: Some(Default::default()),
             definitions: Default::default(),
+            statements: Default::default(),
         };
         self.eat(&TokenKind::LBrace)?;
         loop {
@@ -140,8 +142,8 @@ impl Parser {
                     module.definitions.push(Definition::VarDef(definition));
                 }
                 TokenKind::LBrace => {
-                    let definition = self.parse_intermediate_level(package_name)?;
-                    module.definitions.push(Definition::Scope(definition));
+                    let submodule = self.parse_intermediate_level(package_name)?;
+                    module.statements.push(Statement::Module(submodule));
                 }
                 TokenKind::RBrace => {
                     break;
@@ -411,6 +413,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::front::ast_creator::token_types::Span;
 
     #[test]
     fn test_parser_eat() {

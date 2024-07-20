@@ -1,10 +1,10 @@
 mod scope_table;
 mod visitor;
 
-use crate::front::ast_types::{Definition, FullItemPath, Module, RawNameRoot};
+use crate::front::ast_types::{FullItemPath, Module, RawNameRoot};
 use crate::front::passes::name_resolution::scope_table::ScopeTable;
 use crate::front::passes::visitor::Visitable;
-use crate::modules::ModuleId;
+
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq)]

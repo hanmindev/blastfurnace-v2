@@ -7,7 +7,6 @@ use crate::front::ast_types::{Definition, FullItemPath};
 use crate::front::passes::name_resolution::resolve_names;
 use crate::modules::ModuleDependencies;
 use std::collections::{HashMap, HashSet};
-use std::io::Read;
 
 pub fn parse_file(
     module_path: FullItemPath,
@@ -16,10 +15,10 @@ pub fn parse_file(
     let mut module = create_ast(&module_path.package_name, file_contents);
 
     // TODO: error handling
-    let definitions = resolve_names(module_path, &mut module).unwrap();
+    let _definitions = resolve_names(module_path, &mut module).unwrap();
 
-    let module_dependencies: ModuleDependencies = HashSet::new();
-    let definitions: DefinitionMap;
+    let _module_dependencies: ModuleDependencies = HashSet::new();
+    let _definitions: DefinitionMap;
 
     todo!()
 }

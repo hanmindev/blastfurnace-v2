@@ -110,11 +110,19 @@ pub enum Definition {
     VarDef(VarDef),
     StructDef(StructDef),
     FnDef(FnDef),
-    Scope(Module),
+}
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum Statement {
+    VarAssign(String), // TODO
+    FnCall(String),    // TODO
+    Return,
+    Module(Module),
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Module {
     pub uses: Option<Vec<(RawName, FullItemPath)>>,
     pub definitions: Vec<Definition>,
+    pub statements: Vec<Statement>,
 }
