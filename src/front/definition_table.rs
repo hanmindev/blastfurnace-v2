@@ -1,6 +1,4 @@
-use crate::front::ast_types::{
-    Definition, FnDef, Module, ResolvedName, StaticVarDef, StructDef, VarDef,
-};
+use crate::front::ast_types::{FnDef, ResolvedName, StaticVarDef, StructDef, VarDef};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
