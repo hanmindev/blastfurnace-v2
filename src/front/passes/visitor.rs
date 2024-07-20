@@ -1,6 +1,6 @@
 use crate::front::ast_types::{
-    Definition, FnDef, FunctionReference, Module, StaticVarDef, StructDef, Type, TypeReference,
-    VarDef, VarReference,
+    Definition, FnDef, FunctionReference, Item, Module, Statement, StaticVarDef, StructDef, Type,
+    TypeReference, VarDef, VarReference,
 };
 /*
 The current file sets up the infrastructure for the visitor pattern.
@@ -15,13 +15,17 @@ pub enum ASTNodeEnum<'a> {
     TypeReference(&'a mut TypeReference),
     FunctionReference(&'a mut FunctionReference),
 
+    Item(&'a mut Item),
+
+    Definition(&'a mut Definition),
+
     StaticVarDef(&'a mut StaticVarDef),
     VarDef(&'a mut VarDef),
     FnDef(&'a mut FnDef),
     StructDef(&'a mut StructDef),
     Module(&'a mut Module),
 
-    Definition(&'a mut Definition),
+    Statement(&'a mut Statement),
 }
 
 pub type GenericVisitApplyResult<K, V> = Result<(bool, Option<K>), V>;
@@ -124,9 +128,23 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Module {
         let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::Module(self))?;
         if visit_result {
             // skip the uses because name resolution will get rid of it instantly
-            for definition in self.definitions.iter_mut() {
-                definition.visit(visitor)?;
+            for item in self.items.iter_mut() {
+                item.visit(visitor)?;
             }
+        }
+        Ok(res)
+    }
+}
+
+impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Item {
+    fn visit(&mut self, visitor: &mut T) -> Result<Option<K>, V> {
+        let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::Item(self))?;
+        if visit_result {
+            match self {
+                Item::Definition(x) => x.visit(visitor)?,
+                Item::Statement(x) => x.visit(visitor)?,
+                Item::Module(x) => x.visit(visitor)?,
+            };
         }
         Ok(res)
     }
@@ -141,9 +159,22 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Definition {
                 Definition::VarDef(x) => x.visit(visitor)?,
                 Definition::StructDef(x) => x.visit(visitor)?,
                 Definition::FnDef(x) => x.visit(visitor)?,
-                Definition::Scope(x) => x.visit(visitor)?,
             };
         }
+        Ok(res)
+    }
+}
+
+impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Statement {
+    fn visit(&mut self, visitor: &mut T) -> Result<Option<K>, V> {
+        let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::Statement(self))?;
+        // if visit_result {
+        //     match self {
+        //         Statement::VarAssign(x) => x.visit(visitor)?,
+        //         Statement::FnCall(x) => x.visit(visitor)?,
+        //         Statement::Return => {}
+        //     };
+        // }
         Ok(res)
     }
 }

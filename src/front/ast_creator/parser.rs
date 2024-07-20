@@ -1,7 +1,7 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
 use crate::front::ast_types::{
-    Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, StaticVarDef, StructDef,
-    Type, TypeReference, VarDef, VarReference,
+    Definition, FnDef, FullItemPath, FunctionReference, Item, Module, RawName, StaticVarDef,
+    StructDef, Type, TypeReference, VarDef, VarReference,
 };
 use std::cmp::min;
 use std::collections::HashMap;
@@ -70,7 +70,7 @@ impl Parser {
     fn parse_top_level(&mut self, package_name: &str) -> ParseResult<Module> {
         let mut module = Module {
             uses: Some(Default::default()),
-            definitions: Default::default(),
+            items: Default::default(),
         };
 
         loop {
@@ -84,17 +84,21 @@ impl Parser {
                 }
                 TokenKind::Fn => {
                     let definition = self.parse_fn_definition(package_name)?;
-                    module.definitions.push(Definition::FnDef(definition));
+                    module
+                        .items
+                        .push(Item::Definition(Definition::FnDef(definition)));
                 }
                 TokenKind::Struct => {
                     let definition = self.parse_struct_definition()?;
-                    module.definitions.push(Definition::StructDef(definition));
+                    module
+                        .items
+                        .push(Item::Definition(Definition::StructDef(definition)));
                 }
                 TokenKind::Static => {
                     let definition = self.parse_static_var_definition()?;
                     module
-                        .definitions
-                        .push(Definition::StaticVarDef(definition));
+                        .items
+                        .push(Item::Definition(Definition::StaticVarDef(definition)));
                 }
                 TokenKind::Eof => {
                     break;
@@ -115,7 +119,7 @@ impl Parser {
     fn parse_intermediate_level(&mut self, package_name: &str) -> ParseResult<Module> {
         let mut module = Module {
             uses: Some(Default::default()),
-            definitions: Default::default(),
+            items: Default::default(),
         };
         self.eat(&TokenKind::LBrace)?;
         loop {
@@ -129,19 +133,25 @@ impl Parser {
                 }
                 TokenKind::Fn => {
                     let definition = self.parse_fn_definition(package_name)?;
-                    module.definitions.push(Definition::FnDef(definition));
+                    module
+                        .items
+                        .push(Item::Definition(Definition::FnDef(definition)));
                 }
                 TokenKind::Struct => {
                     let definition = self.parse_struct_definition()?;
-                    module.definitions.push(Definition::StructDef(definition));
+                    module
+                        .items
+                        .push(Item::Definition(Definition::StructDef(definition)));
                 }
                 TokenKind::Let => {
                     let definition = self.parse_var_definition()?;
-                    module.definitions.push(Definition::VarDef(definition));
+                    module
+                        .items
+                        .push(Item::Definition(Definition::VarDef(definition)));
                 }
                 TokenKind::LBrace => {
-                    let definition = self.parse_intermediate_level(package_name)?;
-                    module.definitions.push(Definition::Scope(definition));
+                    let submodule = self.parse_intermediate_level(package_name)?;
+                    module.items.push(Item::Module(submodule));
                 }
                 TokenKind::RBrace => {
                     break;

@@ -17,7 +17,7 @@ pub fn create_ast(file_root_package_name: &str, src: &str) -> Module {
 mod tests {
     use crate::front::ast_creator::create_ast;
     use crate::front::ast_types::{
-        Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, StaticVarDef,
+        Definition, FnDef, FullItemPath, FunctionReference, Item, Module, RawName, StaticVarDef,
         StructDef, Type, TypeReference, VarDef, VarReference,
     };
     use camino::Utf8PathBuf;
@@ -102,7 +102,7 @@ mod tests {
 
         let expected = Module {
             uses: Some(vec![]),
-            definitions: vec![Definition::StructDef(StructDef {
+            items: vec![Item::Definition(Definition::StructDef(StructDef {
                 name: TypeReference::new(("struct_a".to_string(), None)),
                 field_types: {
                     let mut field_types = HashMap::new();
@@ -113,7 +113,7 @@ mod tests {
                     );
                     field_types
                 },
-            })],
+            }))],
         };
 
         let ast = create_ast(current_package, src);
@@ -129,10 +129,10 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![Definition::StaticVarDef(StaticVarDef {
+            items: vec![Item::Definition(Definition::StaticVarDef(StaticVarDef {
                 name: VarReference::new(("val".to_string(), None)),
                 ty: Type::Int,
-            })],
+            }))],
         };
 
         let ast = create_ast(current_package, src);
@@ -149,15 +149,15 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![Definition::FnDef(FnDef {
+            items: vec![Item::Definition(Definition::FnDef(FnDef {
                 return_type: Type::Void,
                 name: FunctionReference::new(("fn_a".to_string(), None)),
                 args: vec![],
                 body: Module {
                     uses: Some(vec![]),
-                    definitions: vec![],
+                    items: vec![],
                 },
-            })],
+            }))],
         };
 
         let ast = create_ast(current_package, src);
@@ -175,18 +175,18 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![Definition::FnDef(FnDef {
+            items: vec![Item::Definition(Definition::FnDef(FnDef {
                 return_type: Type::Void,
                 name: FunctionReference::new(("fn_a".to_string(), None)),
                 args: vec![],
                 body: Module {
                     uses: Some(vec![]),
-                    definitions: vec![Definition::VarDef(VarDef {
+                    items: vec![Item::Definition(Definition::VarDef(VarDef {
                         name: VarReference::new(("val".to_string(), None)),
                         ty: Type::Int,
-                    })],
+                    }))],
                 },
-            })],
+            }))],
         };
 
         let ast = create_ast(current_package, src);
@@ -203,7 +203,7 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![Definition::FnDef(FnDef {
+            items: vec![Item::Definition(Definition::FnDef(FnDef {
                 return_type: Type::Struct(TypeReference::new(("struct_c".to_string(), None))),
                 name: FunctionReference::new(("fn_a".to_string(), None)),
                 args: vec![
@@ -218,9 +218,9 @@ mod tests {
                 ],
                 body: Module {
                     uses: Some(vec![]),
-                    definitions: vec![],
+                    items: vec![],
                 },
-            })],
+            }))],
         };
 
         let ast = create_ast(current_package, src);
@@ -238,18 +238,18 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![Definition::FnDef(FnDef {
+            items: vec![Item::Definition(Definition::FnDef(FnDef {
                 return_type: Type::Void,
                 name: FunctionReference::new(("fn_a".to_string(), None)),
                 args: vec![],
                 body: Module {
                     uses: Some(vec![]),
-                    definitions: vec![Definition::Scope(Module {
+                    items: vec![Item::Module(Module {
                         uses: Some(vec![]),
-                        definitions: vec![],
+                        items: vec![],
                     })],
                 },
-            })],
+            }))],
         };
 
         let ast = create_ast(current_package, src);
@@ -272,15 +272,15 @@ mod tests {
 
         let expected_ast = Module {
             uses: Some(vec![]),
-            definitions: vec![Definition::FnDef(FnDef {
+            items: vec![Item::Definition(Definition::FnDef(FnDef {
                 return_type: Type::Void,
                 name: FunctionReference::new(("fn_a".to_string(), None)),
                 args: vec![],
                 body: Module {
                     uses: Some(vec![]),
-                    definitions: vec![Definition::Scope(Module {
+                    items: vec![Item::Module(Module {
                         uses: Some(vec![]),
-                        definitions: vec![Definition::StructDef(StructDef {
+                        items: vec![Item::Definition(Definition::StructDef(StructDef {
                             name: TypeReference::new(("struct_a".to_string(), None)),
                             field_types: {
                                 let mut field_types = HashMap::new();
@@ -294,10 +294,10 @@ mod tests {
                                 );
                                 field_types
                             },
-                        })],
+                        }))],
                     })],
                 },
-            })],
+            }))],
         };
 
         let ast = create_ast(current_package, src);
