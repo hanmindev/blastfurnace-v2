@@ -16,7 +16,10 @@ pub fn create_ast(file_root_package_name: &str, src: &str) -> Module {
 #[cfg(test)]
 mod tests {
     use crate::front::ast_creator::create_ast;
-    use crate::front::ast_types::{Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference};
+    use crate::front::ast_types::{
+        Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, StaticVarDef,
+        StructDef, Type, TypeReference, VarDef, VarReference,
+    };
     use camino::Utf8PathBuf;
     use std::collections::HashMap;
 
@@ -32,23 +35,53 @@ mod tests {
         let uses: Vec<(RawName, FullItemPath)> = vec![
             (
                 ("struct_a".to_string(), None),
-                FullItemPath::new("package_a".to_string(), vec!["struct_a"].iter().map(|x| x.to_string()).collect::<Vec<String>>()),
+                FullItemPath::new(
+                    "package_a".to_string(),
+                    vec!["struct_a"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                ),
             ),
             (
                 ("struct_b".to_string(), None),
-                FullItemPath::new("package_a".to_string(), vec!["path", "path2", "struct_b"].iter().map(|x| x.to_string()).collect::<Vec<String>>()),
+                FullItemPath::new(
+                    "package_a".to_string(),
+                    vec!["path", "path2", "struct_b"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                ),
             ),
             (
                 ("struct_c".to_string(), None),
-                FullItemPath::new("package_a".to_string(), vec!["path", "path2", "struct_c"].iter().map(|x| x.to_string()).collect::<Vec<String>>()),
+                FullItemPath::new(
+                    "package_a".to_string(),
+                    vec!["path", "path2", "struct_c"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                ),
             ),
             (
                 ("struct_d".to_string(), None),
-                FullItemPath::new("package_b".to_string(), vec!["path", "path2", "struct_d"].iter().map(|x| x.to_string()).collect::<Vec<String>>()),
+                FullItemPath::new(
+                    "package_b".to_string(),
+                    vec!["path", "path2", "struct_d"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                ),
             ),
             (
                 ("struct_e".to_string(), None),
-                FullItemPath::new("package_b".to_string(), vec!["path", "path2", "struct_e"].iter().map(|x| x.to_string()).collect::<Vec<String>>()),
+                FullItemPath::new(
+                    "package_b".to_string(),
+                    vec!["path", "path2", "struct_e"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                ),
             ),
         ];
 
@@ -254,7 +287,10 @@ mod tests {
                                 field_types.insert("field_a".to_string(), Type::Int);
                                 field_types.insert(
                                     "field_b".to_string(),
-                                    Type::Struct(TypeReference::new(("struct_b".to_string(), None))),
+                                    Type::Struct(TypeReference::new((
+                                        "struct_b".to_string(),
+                                        None,
+                                    ))),
                                 );
                                 field_types
                             },
