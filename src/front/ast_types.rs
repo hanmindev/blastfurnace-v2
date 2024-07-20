@@ -108,7 +108,6 @@ pub struct FnDef {
 pub enum Item {
     Definition(Definition),
     Statement(Statement),
-    Module(Module),
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -124,6 +123,7 @@ pub enum Statement {
     VarAssign(String), // TODO
     FnCall(String),    // TODO
     Return,
+    Module(Module),
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]

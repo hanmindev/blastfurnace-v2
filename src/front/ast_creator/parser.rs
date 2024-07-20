@@ -1,7 +1,7 @@
 use crate::front::ast_creator::token_types::{Span, Token, TokenKind};
 use crate::front::ast_types::{
-    Definition, FnDef, FullItemPath, FunctionReference, Item, Module, RawName, StaticVarDef,
-    StructDef, Type, TypeReference, VarDef, VarReference,
+    Definition, FnDef, FullItemPath, FunctionReference, Item, Module, RawName, Statement,
+    StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference,
 };
 use std::cmp::min;
 use std::collections::HashMap;
@@ -151,7 +151,9 @@ impl Parser {
                 }
                 TokenKind::LBrace => {
                     let submodule = self.parse_intermediate_level(package_name)?;
-                    module.items.push(Item::Module(submodule));
+                    module
+                        .items
+                        .push(Item::Statement(Statement::Module(submodule)));
                 }
                 TokenKind::RBrace => {
                     break;

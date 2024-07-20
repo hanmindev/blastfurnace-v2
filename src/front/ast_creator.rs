@@ -17,8 +17,8 @@ pub fn create_ast(file_root_package_name: &str, src: &str) -> Module {
 mod tests {
     use crate::front::ast_creator::create_ast;
     use crate::front::ast_types::{
-        Definition, FnDef, FullItemPath, FunctionReference, Item, Module, RawName, StaticVarDef,
-        StructDef, Type, TypeReference, VarDef, VarReference,
+        Definition, FnDef, FullItemPath, FunctionReference, Item, Module, RawName, Statement,
+        StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference,
     };
     use camino::Utf8PathBuf;
     use std::collections::HashMap;
@@ -244,10 +244,10 @@ mod tests {
                 args: vec![],
                 body: Module {
                     uses: Some(vec![]),
-                    items: vec![Item::Module(Module {
+                    items: vec![Item::Statement(Statement::Module(Module {
                         uses: Some(vec![]),
                         items: vec![],
-                    })],
+                    }))],
                 },
             }))],
         };
@@ -278,7 +278,7 @@ mod tests {
                 args: vec![],
                 body: Module {
                     uses: Some(vec![]),
-                    items: vec![Item::Module(Module {
+                    items: vec![Item::Statement(Statement::Module(Module {
                         uses: Some(vec![]),
                         items: vec![Item::Definition(Definition::StructDef(StructDef {
                             name: TypeReference::new(("struct_a".to_string(), None)),
@@ -295,7 +295,7 @@ mod tests {
                                 field_types
                             },
                         }))],
-                    })],
+                    }))],
                 },
             }))],
         };

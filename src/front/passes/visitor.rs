@@ -143,7 +143,6 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Item {
             match self {
                 Item::Definition(x) => x.visit(visitor)?,
                 Item::Statement(x) => x.visit(visitor)?,
-                Item::Module(x) => x.visit(visitor)?,
             };
         }
         Ok(res)
@@ -168,13 +167,15 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Definition {
 impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Statement {
     fn visit(&mut self, visitor: &mut T) -> Result<Option<K>, V> {
         let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::Statement(self))?;
-        // if visit_result {
-        //     match self {
-        //         Statement::VarAssign(x) => x.visit(visitor)?,
-        //         Statement::FnCall(x) => x.visit(visitor)?,
-        //         Statement::Return => {}
-        //     };
-        // }
+        if visit_result {
+            match self {
+                Statement::Module(x) => x.visit(visitor)?,
+                _ => None,
+                // Statement::VarAssign(x) => x.visit(visitor)?,
+                // Statement::FnCall(x) => x.visit(visitor)?,
+                // Statement::Return => {}
+            };
+        }
         Ok(res)
     }
 }
