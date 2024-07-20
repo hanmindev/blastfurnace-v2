@@ -5,31 +5,21 @@ use crate::modules::{module_id_from_local, ModuleId};
 use std::collections::{HashMap, HashSet};
 use camino::Utf8PathBuf;
 
-fn item_path_to_buf(item_path: &ItemPath) -> Utf8PathBuf {
-    let mut buf = Utf8PathBuf::new();
-    for item in item_path {
-        buf.push(item);
-    }
-    buf
-}
-
-
 fn stitch_path(full_item_path: FullItemPath, mut tail: &Option<Vec<RawNameTailNode>>) -> ResolvedName {
-    let (package_name, mut item_path, item) = full_item_path;
+    let (package_name, mut item_path) = full_item_path;
 
     if let Some(tail_unwrap) = tail {
         if tail_unwrap.len() != 0 {
-            item_path.push(item);
-
             for i in 0..tail_unwrap.len() - 1 {
                 item_path.push(tail_unwrap[i].clone());
             }
 
-            return (module_id_from_local(&package_name, &item_path_to_buf(&item_path)), tail_unwrap.last().unwrap().clone());
+            return (module_id_from_local(&package_name, &item_path), tail_unwrap.last().unwrap().clone());
         }
     }
 
-    return (module_id_from_local(&package_name, &item_path_to_buf(&item_path)), item);
+    let item = item_path.pop().unwrap(); // TODO: error handling
+    return (module_id_from_local(&package_name, &item_path), item);
 }
 
 struct ScopeTableLayer {
@@ -40,7 +30,6 @@ struct ScopeTableLayer {
 }
 
 pub struct ScopeTable {
-    module_id: ModuleId,
     module_path: FullItemPath,
     stack: Vec<ScopeTableLayer>,
 
@@ -48,9 +37,8 @@ pub struct ScopeTable {
 }
 
 impl ScopeTable {
-    pub fn new(module_id: ModuleId, module_path: FullItemPath) -> ScopeTable {
+    pub fn new(module_path: FullItemPath) -> ScopeTable {
         ScopeTable {
-            module_id,
             module_path,
             stack: vec![],
             global_count: HashMap::new(),
@@ -114,8 +102,7 @@ impl ScopeTable {
                 };
 
                 let mut path = self.module_path.clone();
-                path.1.push(path.2);
-                path.2 = format!("{}:{}:{}", size - 1, new_count, raw_name);
+                path.1.push(format!("{}:{}:{}", size - 1, new_count, raw_name));
 
                 path
             }

@@ -23,11 +23,10 @@ type NameResolutionResult<T> = Result<T, NameResolutionError>;
 * It will also give the proper name for imported names
  */
 pub fn resolve_names(
-    module_id: ModuleId, // id of the module we are resolving names for
     module_path: FullItemPath,
     module: &mut Module, // the ASTFile containing the definitions
 ) -> NameResolutionResult<()> {
-    let mut scope_table = ScopeTable::new(module_id, module_path);
+    let mut scope_table = ScopeTable::new(module_path);
     module.visit(&mut scope_table)?;
 
     Ok(())
@@ -50,9 +49,8 @@ mod tests {
         "#;
         let mut module = create_ast(current_package, src);
 
-        let module_id = ModuleId::from("module_a");
-        let module_path = (current_package.to_string(), vec![], "module_a".to_string());
-        let err = resolve_names(module_id.clone(), module_path.clone(), &mut module);
+        let module_path = (current_package.to_string(), vec!["module_a".to_string()]);
+        let err = resolve_names(module_path.clone(), &mut module);
 
         assert_eq!(
             err,
@@ -74,10 +72,8 @@ mod tests {
         "#;
         let mut module = create_ast(current_package, src);
 
-        let module_id = ModuleId::from("module_a");
-
-        let module_path = (current_package.to_string(), vec![], "module_a".to_string());
-        let err = resolve_names(module_id.clone(), module_path.clone(), &mut module);
+        let module_path = (current_package.to_string(), vec!["module_a".to_string()]);
+        let err = resolve_names(module_path.clone(), &mut module);
 
         assert_eq!(
             err,
@@ -96,10 +92,8 @@ mod tests {
         "#;
         let mut module = create_ast(current_package, src);
 
-        let module_id = ModuleId::from("module_a");
-
-        let module_path = (current_package.to_string(), vec![], "module_a".to_string());
-        let err = resolve_names(module_id.clone(), module_path.clone(), &mut module);
+        let module_path = (current_package.to_string(), vec!["module_a".to_string()]);
+        let err = resolve_names(module_path.clone(), &mut module);
 
         assert_eq!(
             err,
@@ -124,8 +118,8 @@ mod tests {
         let module_id = ModuleId::from("package_a::module_a");
 
 
-        let module_path = (current_package.to_string(), vec![], "module_a".to_string());
-        resolve_names(module_id.clone(), module_path.clone(), &mut module).unwrap();
+        let module_path = (current_package.to_string(), vec!["module_a".to_string()]);
+        resolve_names(module_path.clone(), &mut module).unwrap();
 
         let definitions = module.definitions;
 
@@ -177,10 +171,8 @@ mod tests {
         "#;
         let mut module = create_ast(current_package, src);
 
-        let module_id = ModuleId::from("package_a::module_a");
-
-        let module_path = (current_package.to_string(), vec![], "module_a".to_string());
-        let err = resolve_names(module_id.clone(), module_path, &mut module);
+        let module_path = (current_package.to_string(), vec!["module_a".to_string()]);
+        let err = resolve_names(module_path, &mut module);
 
         assert_eq!(
             err,
@@ -204,10 +196,8 @@ mod tests {
         "#;
         let mut module = create_ast(current_package, src);
 
-        let module_id = ModuleId::from("package_a::module_a");
-
-        let module_path = (current_package.to_string(), vec![], "module_a".to_string());
-        let err = resolve_names(module_id.clone(), module_path, &mut module);
+        let module_path = (current_package.to_string(), vec!["module_a".to_string()]);
+        let err = resolve_names(module_path, &mut module);
 
         assert_eq!(
             err,
@@ -233,8 +223,8 @@ mod tests {
 
         let module_id = ModuleId::from("package_a::module_a");
 
-        let module_path = (current_package.to_string(), vec![], "module_a".to_string());
-        resolve_names(module_id.clone(), module_path, &mut module).unwrap();
+        let module_path = (current_package.to_string(), vec!["module_a".to_string()]);
+        resolve_names(module_path, &mut module).unwrap();
 
         let definitions = module.definitions;
 

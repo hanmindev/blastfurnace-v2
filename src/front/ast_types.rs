@@ -35,7 +35,7 @@ impl<T: Debug, R: Debug, D> Debug for Reference<T, R, D> {
 }
 
 
-pub type FullItemPath = (PackageName, ItemPath, ItemName);
+pub type FullItemPath = (PackageName, ItemPath);
 pub type PackageName = String;
 pub type ItemPath = Vec<String>;
 pub type RawNameRoot = String;

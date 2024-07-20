@@ -5,9 +5,11 @@ use crate::modules::types::{ModuleCachableData, ModuleGraph};
 use camino::{Utf8Path, Utf8PathBuf};
 use std::collections::{HashSet, VecDeque};
 use std::io::Read;
+use crate::modules::utf8buf_utils::utf8path_buf_to_vec;
 
 mod cache;
 mod types;
+mod utf8buf_utils;
 
 enum ModuleBuildError {
     NoMainInRoot,
@@ -54,7 +56,7 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                 if let Some(module_name) = file_path.file_name() {
                     queue.push_back(file_path.with_extension(""));
                     let rel_path = &create_rel_path(&file_path, &path);
-                    let id = module_id_from_local(package_name, rel_path);
+                    let id = module_id_from_local(package_name, &utf8path_buf_to_vec(&rel_path));
 
                     if find_root && module_name == "main" {
                         self.module_graph.root = Some(id.clone());
@@ -91,7 +93,9 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                 .get_file_age(&abs_path)
                 .or(Err(ModuleBuildError::FileNoLongerExists))?;
 
-            let module_id = module_id_from_local(&node.package_name, &rel_path);
+            let item_path = utf8path_buf_to_vec(&rel_path);
+
+            let module_id = module_id_from_local(&node.package_name, &item_path);
             if let Some(&ref body) = self.build_cache.get_module(&module_id) {
                 if body.read_on == age {
                     node.body = Some(body.clone());
@@ -112,7 +116,7 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                     .or(Err(ModuleBuildError::FileReadError))?;
 
                 let (direct_deps, definitions) =
-                    parse_file(&node.package_name, module_id, ("pkg".to_string(), vec![], "module_a".to_string()), &file_content);
+                    parse_file(&node.package_name, (node.package_name.clone(), item_path), &file_content);
                 // TODO:
 
                 Some(ModuleCachableData {
@@ -135,8 +139,20 @@ fn create_rel_path(file_path: &Utf8PathBuf, package_path: &Utf8PathBuf) -> Utf8P
 // the module id contains the package name and the relative path to module file from the package root.
 pub type ModuleId = String;
 
-pub fn module_id_from_local(package_name: &str, file_path: &Utf8PathBuf) -> ModuleId {
-    file_path.with_extension("").iter().fold(package_name.to_string(), |a, b| a + "::" + b)
+pub fn module_id_from_local(package_name: &str, file_path: &Vec<String>) -> ModuleId {
+    file_path.iter().fold(package_name.to_string(), |a, b| a + "::" + b)
 }
 
 pub type ModuleDependencies = HashSet<ModuleId>;
+
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_module_id_from_local() {
+        let package_name = "package_a";
+        let file_path = vec!["module_a".to_string(), "module_b".to_string()];
+        let module_id = crate::modules::module_id_from_local(package_name, &file_path);
+        assert_eq!(module_id, "package_a::module_a::module_b");
+    }
+}

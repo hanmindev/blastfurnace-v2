@@ -11,14 +11,13 @@ use std::io::Read;
 
 pub fn parse_file(
     package_name: &str,
-    module_id: ModuleId,
     module_path: FullItemPath,
     file_contents: &str,
 ) -> (ModuleDependencies, DefinitionMap) {
     let mut module = create_ast(package_name, file_contents);
 
     // TODO: error handling
-    let definitions = resolve_names(module_id, module_path, &mut module).unwrap();
+    let definitions = resolve_names(module_path, &mut module).unwrap();
 
     let module_dependencies: ModuleDependencies = HashSet::new();
     let definitions: DefinitionMap;
