@@ -126,7 +126,7 @@ impl<T: Visitor<K, V>, K, V> Visitable<T, K, V> for Module {
         let (visit_result, res) = visitor.apply(&mut ASTNodeEnum::Module(self))?;
         if visit_result {
             // skip the uses because name resolution will get rid of it instantly
-            for definition in self.definitions.iter_mut() {
+            for definition in self.definitions.iter_mut().flatten() {
                 definition.visit(visitor)?;
             }
             for statement in self.statements.iter_mut() {

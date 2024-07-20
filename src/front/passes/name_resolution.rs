@@ -128,7 +128,7 @@ mod tests {
             FullItemPath::new(current_package.to_string(), vec!["module_a".to_string()]);
         resolve_names(module_path, &mut module).unwrap();
 
-        let definitions = module.definitions;
+        let definitions = module.definitions.unwrap();
 
         match definitions[0] {
             Definition::StructDef(ref struct_def) => {
@@ -236,7 +236,7 @@ mod tests {
             FullItemPath::new(current_package.to_string(), vec!["module_a".to_string()]);
         resolve_names(module_path, &mut module).unwrap();
 
-        let definitions = module.definitions;
+        let definitions = module.definitions.unwrap();
 
         match definitions[0] {
             Definition::StructDef(ref struct_def) => {
@@ -249,7 +249,7 @@ mod tests {
         }
 
         match definitions[1] {
-            Definition::FnDef(ref fn_def) => match fn_def.body.definitions[0] {
+            Definition::FnDef(ref fn_def) => match fn_def.body.definitions.as_ref().unwrap()[0] {
                 Definition::StructDef(ref struct_def) => {
                     assert_eq!(
                         Some((module_id.clone(), "1:0:struct_b".to_string())),

@@ -55,8 +55,12 @@ impl Visitor<(), NameResolutionError> for ScopeTable {
                         self.scope_bind(&raw_name.0, true, Some(resolved_name))?;
                     }
                     // then we visit each definition in the Module
-                    for item in module.definitions.iter_mut() {
-                        item.visit(self)?;
+                    for definition in module.definitions.iter_mut().flatten() {
+                        definition.visit(self)?;
+                    }
+                    // then we visit each definition in the Module
+                    for statement in module.statements.iter_mut() {
+                        statement.visit(self)?;
                     }
                     self.scope_exit()?;
                     false
