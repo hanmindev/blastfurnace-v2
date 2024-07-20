@@ -70,7 +70,7 @@ impl Parser {
     fn parse_top_level(&mut self, package_name: &str) -> ParseResult<Module> {
         let mut module = Module {
             uses: Some(Default::default()),
-            definitions: Default::default(),
+            definitions: Some(Default::default()),
             statements: Default::default(),
         };
 
@@ -85,16 +85,26 @@ impl Parser {
                 }
                 TokenKind::Fn => {
                     let definition = self.parse_fn_definition(package_name)?;
-                    module.definitions.push(Definition::FnDef(definition));
+                    module
+                        .definitions
+                        .as_mut()
+                        .unwrap()
+                        .push(Definition::FnDef(definition));
                 }
                 TokenKind::Struct => {
                     let definition = self.parse_struct_definition()?;
-                    module.definitions.push(Definition::StructDef(definition));
+                    module
+                        .definitions
+                        .as_mut()
+                        .unwrap()
+                        .push(Definition::StructDef(definition));
                 }
                 TokenKind::Static => {
                     let definition = self.parse_static_var_definition()?;
                     module
                         .definitions
+                        .as_mut()
+                        .unwrap()
                         .push(Definition::StaticVarDef(definition));
                 }
                 TokenKind::Eof => {
@@ -116,7 +126,7 @@ impl Parser {
     fn parse_intermediate_level(&mut self, package_name: &str) -> ParseResult<Module> {
         let mut module = Module {
             uses: Some(Default::default()),
-            definitions: Default::default(),
+            definitions: Some(Default::default()),
             statements: Default::default(),
         };
         self.eat(&TokenKind::LBrace)?;
@@ -131,15 +141,27 @@ impl Parser {
                 }
                 TokenKind::Fn => {
                     let definition = self.parse_fn_definition(package_name)?;
-                    module.definitions.push(Definition::FnDef(definition));
+                    module
+                        .definitions
+                        .as_mut()
+                        .unwrap()
+                        .push(Definition::FnDef(definition));
                 }
                 TokenKind::Struct => {
                     let definition = self.parse_struct_definition()?;
-                    module.definitions.push(Definition::StructDef(definition));
+                    module
+                        .definitions
+                        .as_mut()
+                        .unwrap()
+                        .push(Definition::StructDef(definition));
                 }
                 TokenKind::Let => {
                     let definition = self.parse_var_definition()?;
-                    module.definitions.push(Definition::VarDef(definition));
+                    module
+                        .definitions
+                        .as_mut()
+                        .unwrap()
+                        .push(Definition::VarDef(definition));
                 }
                 TokenKind::LBrace => {
                     let submodule = self.parse_intermediate_level(package_name)?;

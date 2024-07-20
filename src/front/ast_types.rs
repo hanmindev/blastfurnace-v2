@@ -123,6 +123,6 @@ pub enum Statement {
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Module {
     pub uses: Option<Vec<(RawName, FullItemPath)>>,
-    pub definitions: Vec<Definition>,
+    pub definitions: Option<Vec<Definition>>,
     pub statements: Vec<Statement>,
 }
