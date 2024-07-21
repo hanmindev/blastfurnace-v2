@@ -1,8 +1,6 @@
 use crate::file_system::FileSystem;
-use crate::front::ast_types::FullItemPath;
-use crate::front::parse_file;
 use crate::modules::cache::BuildCacheLayer;
-use crate::modules::types::{ModuleCachableData, ModuleGraph};
+use crate::modules::types::ModuleGraph;
 use crate::modules::utf8buf_utils::utf8path_buf_to_vec;
 use camino::{Utf8Path, Utf8PathBuf};
 use std::collections::{HashSet, VecDeque};
@@ -94,46 +92,11 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                 .unwrap()
                 .join(&rel_path);
 
-            let age = self
-                .build_cache
-                .file_system
-                .get_file_age(&abs_path)
-                .or(Err(ModuleBuildError::FileNoLongerExists))?;
-
-            let item_path = utf8path_buf_to_vec(&rel_path);
-
-            let module_id = module_id_from_local(&node.package_name, &item_path);
-            if let Some(&ref body) = self.build_cache.get_module(&module_id) {
-                if body.read_on == age {
-                    node.body = Some(body.clone());
-                    continue;
-                }
-            }
-
-            node.body = {
-                let mut reader = self
-                    .build_cache
-                    .file_system
-                    .get_reader(&abs_path)
-                    .or(Err(ModuleBuildError::FileNoLongerExists))?;
-
-                let mut file_content = String::new();
-                reader
-                    .read_to_string(&mut file_content)
-                    .or(Err(ModuleBuildError::FileReadError))?;
-
-                let (direct_deps, definitions) = parse_file(
-                    FullItemPath::new(node.package_name.clone(), item_path),
-                    &file_content,
-                );
-
-                Some(ModuleCachableData {
-                    read_on: age,
-                    direct_deps,
-                    definitions,
-                    object: None,
-                })
-            };
+            node.body = Some(self.build_cache.take_module(
+                &node.package_name,
+                &utf8path_buf_to_vec(&rel_path),
+                &abs_path,
+            )?);
         }
 
         Ok(())
