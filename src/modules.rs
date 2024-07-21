@@ -3,7 +3,7 @@ use crate::modules::cache::BuildCacheLayer;
 use crate::modules::types::ModuleGraph;
 use crate::modules::utf8buf_utils::utf8path_buf_to_vec;
 use camino::Utf8PathBuf;
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::Read;
 
 mod cache;
@@ -100,6 +100,25 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
         }
 
         Ok(())
+    }
+
+    pub fn save_cache(&mut self) {
+        let cache =
+            self.module_graph
+                .nodes
+                .drain()
+                .fold(HashMap::new(), |mut acc, (id, mut node)| {
+                    if let Some(body) = node.body.take() {
+                        acc.insert(id, body);
+                    }
+                    acc
+                });
+
+        self.build_cache.save_cache(&cache);
+    }
+
+    pub fn load_cache(&mut self) {
+        self.build_cache.load_cache();
     }
 
     pub fn get_module_graph(&self) -> &ModuleGraph {
@@ -245,5 +264,40 @@ mod tests {
 
         let module_graph = module_builder.get_module_graph();
         assert_eq!(module_graph.root, Some("pack::main".to_string()));
+    }
+
+    #[test]
+    fn test_caching() {
+        let mut mock_fs = MockFileSystem::new();
+        mock_fs.insert_dir(Utf8PathBuf::from("pkg/package_a"));
+        mock_fs.insert_file(Utf8PathBuf::from("pkg/package_a/main.ing"), "fn main() {}");
+        mock_fs.insert_file(
+            Utf8PathBuf::from("pkg/package_a/module_a.ing"),
+            "static a: int;",
+        );
+
+        let mut module_builder = ModuleBuilder::new(&mut mock_fs, Some(Utf8PathBuf::from("cache")));
+
+        module_builder
+            .add_fs_package("package_a", &Utf8PathBuf::from("pkg/package_a"), true)
+            .unwrap();
+
+        module_builder.load_module_bodies().unwrap();
+
+        // save cache
+        module_builder.save_cache();
+
+        // load cache
+        let mut module_builder = ModuleBuilder::new(&mut mock_fs, Some(Utf8PathBuf::from("cache")));
+        module_builder.load_cache();
+
+        module_builder
+            .add_fs_package("package_a", &Utf8PathBuf::from("pkg/package_a"), true)
+            .unwrap();
+
+        module_builder.load_module_bodies().unwrap();
+
+        let module_graph = module_builder.get_module_graph();
+        assert_eq!(module_graph.root, Some("package_a::main".to_string()));
     }
 }

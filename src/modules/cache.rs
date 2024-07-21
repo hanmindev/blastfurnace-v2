@@ -1,4 +1,4 @@
-use crate::file_system::FileSystem;
+use crate::file_system::{FileSystem, FileSystemError, FileSystemResult};
 use crate::front::ast_types::{FullItemPath, ItemPath, PackageName};
 use crate::front::parse_file;
 use crate::modules::types::ModuleCachableData;
@@ -33,27 +33,27 @@ impl<T: FileSystem> BuildCacheLayer<'_, T> {
                         serde_json::from_reader(reader).unwrap();
                     self.cache = Some(cache);
                 }
-                Err(_) => {
+                Err(FileSystemError::FileNotFound) => {
                     self.cache = Some(HashMap::new());
+                }
+                _ => {
+                    panic!("Unexpected error while reading cache file");
                 }
             }
         }
     }
 
-    pub fn save_cache(&mut self) {
+    pub fn save_cache(&mut self, cache: &HashMap<ModuleId, ModuleCachableData>) {
         // save cache to disk
 
         if let Some(cache_location) = &self.cache_location {
-            let cache = self.cache.as_ref().unwrap();
             // TODO: add proper error handling
-            let j = serde_json::to_string(cache).unwrap();
-            // TODO: add proper error handling
-            let mut file = self
+            let file = self
                 .file_system
                 .get_writer(&cache_location.to_path_buf())
                 .unwrap();
             // TODO: add proper error handling
-            file.write_all(j.as_bytes()).unwrap();
+            serde_json::to_writer(file, cache).unwrap();
         }
     }
 
