@@ -126,22 +126,27 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
 
     pub fn build_all_modules(&mut self) {
         let mut global_definition_table = GlobalDefinitionTable::new();
-        for (module_id, node) in self.module_graph.nodes.iter_mut() {
-            let body = &mut node.body.as_ref().unwrap();
+        for (module_id, node) in self.module_graph.nodes.iter() {
+            let body = node.body.as_ref().unwrap();
             global_definition_table.add_definition_table(module_id.clone(), &body.definitions);
         }
 
-        for (module_id, node) in self.module_graph.nodes.iter_mut() {
-            let mut body = &mut node.body.as_mut().unwrap();
+        let mut body_object_map = HashMap::new(); // separate map to keep the borrow checker happy
+
+        for (module_id, node) in self.module_graph.nodes.iter() {
+            let mut body = node.body.as_ref().unwrap();
             if body.object.is_some() {
                 continue;
             }
 
             let ir = generate_ir(module_id, &global_definition_table);
-
             let asm = ir_to_asm(module_id, ir);
+            body_object_map.insert(module_id.clone(), asm);
+        }
 
-            body.object = Some(asm);
+        for (module_id, file) in body_object_map.iter() {
+            let node = self.module_graph.nodes.get_mut(module_id).unwrap();
+            node.body.as_mut().unwrap().object = Some(file.clone());
         }
     }
 }
