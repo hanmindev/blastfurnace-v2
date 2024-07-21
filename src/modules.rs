@@ -38,7 +38,7 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
         &mut self,
         package_name: &str,
         path: &Utf8PathBuf,
-        is_root: bool,
+        is_root_package: bool,
     ) -> ModuleBuildResult<()> {
         self.module_graph
             .package_map
@@ -46,7 +46,8 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
 
         let mut queue = VecDeque::from([path.clone()]);
 
-        let mut find_root = is_root;
+        let mut is_root_dir = true;
+        let mut found_root_module = false;
 
         while let Some(current_path) = queue.pop_front() {
             let file_paths = self
@@ -56,23 +57,28 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
 
             for file_path in file_paths {
                 if let Some(module_name) = file_path.file_name() {
-                    queue.push_back(file_path.with_extension(""));
                     let rel_path = &create_rel_path(&file_path, &path);
                     let id = module_id_from_local(
                         package_name,
                         &utf8path_buf_to_vec(&rel_path.with_extension("")),
                     );
 
-                    if find_root && module_name == "main.ing" {
-                        self.module_graph.root = Some(id.clone());
-                        find_root = false;
+                    if is_root_dir && module_name == "main.ing" {
+                        if is_root_package {
+                            self.module_graph.root = Some(id.clone());
+                            found_root_module = true;
+                        } else {
+                            continue;
+                        }
                     }
 
+                    queue.push_back(file_path.with_extension(""));
                     self.module_graph.create_node(id, &package_name, &rel_path);
                 }
             }
+            is_root_dir = false;
 
-            if find_root {
+            if !found_root_module && is_root_package {
                 self.module_graph.nodes.clear();
                 return Err(ModuleBuildError::NoMainInRoot);
             }
