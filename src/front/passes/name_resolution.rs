@@ -133,13 +133,19 @@ mod tests {
         match definitions[0] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
-                    Some(ResolvedName::new(module_id.clone(), "0:0:struct_a".to_string())),
+                    Some(ResolvedName::new(
+                        module_id.clone(),
+                        "0:0:struct_a".to_string()
+                    )),
                     struct_def.name.resolved
                 );
                 match struct_def.field_types["field_a"] {
                     Type::Struct(ref type_ref) => {
                         assert_eq!(
-                            Some(ResolvedName::new(module_id.clone(), "0:0:struct_b".to_string())),
+                            Some(ResolvedName::new(
+                                module_id.clone(),
+                                "0:0:struct_b".to_string()
+                            )),
                             type_ref.resolved,
                         );
                     }
@@ -152,13 +158,19 @@ mod tests {
         match definitions[1] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
-                    Some(ResolvedName::new(module_id.clone(), "0:0:struct_b".to_string())),
+                    Some(ResolvedName::new(
+                        module_id.clone(),
+                        "0:0:struct_b".to_string()
+                    )),
                     struct_def.name.resolved
                 );
                 match struct_def.field_types["field_a"] {
                     Type::Struct(ref type_ref) => {
                         assert_eq!(
-                            Some(ResolvedName::new(module_id.clone(), "0:0:struct_a".to_string())),
+                            Some(ResolvedName::new(
+                                module_id.clone(),
+                                "0:0:struct_a".to_string()
+                            )),
                             type_ref.resolved,
                         );
                     }
@@ -241,7 +253,10 @@ mod tests {
         match definitions[0] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
-                    Some(ResolvedName::new(module_id.clone(), "0:0:struct_a".to_string())),
+                    Some(ResolvedName::new(
+                        module_id.clone(),
+                        "0:0:struct_a".to_string()
+                    )),
                     struct_def.name.resolved
                 );
             }
@@ -252,13 +267,19 @@ mod tests {
             Definition::FnDef(ref fn_def) => match fn_def.body.definitions.as_ref().unwrap()[0] {
                 Definition::StructDef(ref struct_def) => {
                     assert_eq!(
-                        Some(ResolvedName::new(module_id.clone(), "1:0:struct_b".to_string())),
+                        Some(ResolvedName::new(
+                            module_id.clone(),
+                            "1:0:struct_b".to_string()
+                        )),
                         struct_def.name.resolved
                     );
                     match struct_def.field_types["field_a"] {
                         Type::Struct(ref type_ref) => {
                             assert_eq!(
-                                Some(ResolvedName::new(module_id.clone(), "0:0:struct_a".to_string())),
+                                Some(ResolvedName::new(
+                                    module_id.clone(),
+                                    "0:0:struct_a".to_string()
+                                )),
                                 type_ref.resolved,
                             );
                         }

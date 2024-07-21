@@ -1,11 +1,10 @@
-use crate::file_system::{FileSystem, FileSystemError, FileSystemResult};
+use crate::file_system::{FileSystem, FileSystemError};
 use crate::front::ast_types::{FullItemPath, ItemPath, PackageName};
 use crate::front::parse_file;
 use crate::modules::types::ModuleCachableData;
 use crate::modules::{module_id_from_local, ModuleBuildError, ModuleBuildResult, ModuleId};
 use camino::Utf8PathBuf;
 use std::collections::HashMap;
-use std::io::Write;
 
 pub struct BuildCacheLayer<'p, T: FileSystem> {
     pub file_system: &'p mut T,

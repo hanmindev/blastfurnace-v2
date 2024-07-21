@@ -2,7 +2,7 @@ mod visitor;
 
 use crate::front::ast_types::Module;
 use crate::front::passes::collect_dependencies::visitor::DependencyVisitor;
-use crate::front::passes::visitor::{Visitable, Visitor};
+use crate::front::passes::visitor::Visitable;
 use crate::modules::{ModuleDependencies, ModuleId};
 
 pub fn collect_dependencies(module_id: ModuleId, module: &mut Module) -> ModuleDependencies {

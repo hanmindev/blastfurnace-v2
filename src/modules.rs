@@ -224,7 +224,10 @@ mod tests {
         assert_eq!(
             main_definition_table
                 .fn_map
-                .get(&ResolvedName::new("package_a::main".to_string(), "0:0:main".to_string()))
+                .get(&ResolvedName::new(
+                    "package_a::main".to_string(),
+                    "0:0:main".to_string()
+                ))
                 .unwrap()
                 .return_type,
             Type::Void
@@ -232,7 +235,10 @@ mod tests {
         assert_eq!(
             module_a_definition_table
                 .static_var_map
-                .get(&ResolvedName::new("package_a::module_a".to_string(), "0:0:a".to_string()))
+                .get(&ResolvedName::new(
+                    "package_a::module_a".to_string(),
+                    "0:0:a".to_string()
+                ))
                 .unwrap()
                 .ty,
             Type::Int
@@ -241,7 +247,10 @@ mod tests {
         assert_eq!(
             module_b_definition_table
                 .static_var_map
-                .get(&ResolvedName::new("package_b::module_b".to_string(), "0:0:b".to_string()))
+                .get(&ResolvedName::new(
+                    "package_b::module_b".to_string(),
+                    "0:0:b".to_string()
+                ))
                 .unwrap()
                 .ty,
             Type::Int
