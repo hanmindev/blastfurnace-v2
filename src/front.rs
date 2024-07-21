@@ -20,8 +20,8 @@ pub fn parse_file(
 
     // TODO: error handling
     resolve_names(module_path, &mut module).unwrap();
-    let _module_dependencies: ModuleDependencies = collect_dependencies(module_id, &mut module);
-    let _definition_table = collect_definitions(&mut module);
+    let module_dependencies = collect_dependencies(module_id, &mut module);
+    let definition_table = collect_definitions(&mut module);
 
-    todo!()
+    (module_dependencies, definition_table)
 }
