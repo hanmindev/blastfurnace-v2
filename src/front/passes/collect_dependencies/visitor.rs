@@ -25,9 +25,11 @@ impl DependencyVisitor<'_> {
 impl Visitor<(), DependencyError> for DependencyVisitor<'_> {
     fn apply(&mut self, ast_node: &mut ASTNodeEnum) -> ResolveResult<()> {
         let ref_module_id = match ast_node {
-            ASTNodeEnum::VarReference(name) => Some(&name.resolved.as_ref().unwrap().0),
-            ASTNodeEnum::TypeReference(name) => Some(&name.resolved.as_ref().unwrap().0),
-            ASTNodeEnum::FunctionReference(name) => Some(&name.resolved.as_ref().unwrap().0),
+            ASTNodeEnum::VarReference(name) => Some(&name.resolved.as_ref().unwrap().module_id),
+            ASTNodeEnum::TypeReference(name) => Some(&name.resolved.as_ref().unwrap().module_id),
+            ASTNodeEnum::FunctionReference(name) => {
+                Some(&name.resolved.as_ref().unwrap().module_id)
+            }
             _ => None,
         };
 

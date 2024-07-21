@@ -35,7 +35,7 @@ pub fn resolve_names(
 #[cfg(test)]
 mod tests {
     use crate::front::ast_creator::create_ast;
-    use crate::front::ast_types::{Definition, Type};
+    use crate::front::ast_types::{Definition, ResolvedName, Type};
     use crate::modules::ModuleId;
 
     use super::*;
@@ -133,14 +133,20 @@ mod tests {
         match definitions[0] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
-                    Some((module_id.clone(), "0:0:struct_a".to_string())),
+                    Some(ResolvedName::new(
+                        module_id.clone(),
+                        "0:0:struct_a".to_string()
+                    )),
                     struct_def.name.resolved
                 );
                 match struct_def.field_types["field_a"] {
                     Type::Struct(ref type_ref) => {
                         assert_eq!(
+                            Some(ResolvedName::new(
+                                module_id.clone(),
+                                "0:0:struct_b".to_string()
+                            )),
                             type_ref.resolved,
-                            Some((module_id.clone(), "0:0:struct_b".to_string()))
                         );
                     }
                     _ => panic!("Expected Struct"),
@@ -152,14 +158,20 @@ mod tests {
         match definitions[1] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
-                    Some((module_id.clone(), "0:0:struct_b".to_string())),
+                    Some(ResolvedName::new(
+                        module_id.clone(),
+                        "0:0:struct_b".to_string()
+                    )),
                     struct_def.name.resolved
                 );
                 match struct_def.field_types["field_a"] {
                     Type::Struct(ref type_ref) => {
                         assert_eq!(
+                            Some(ResolvedName::new(
+                                module_id.clone(),
+                                "0:0:struct_a".to_string()
+                            )),
                             type_ref.resolved,
-                            Some((module_id.clone(), "0:0:struct_a".to_string()))
                         );
                     }
                     _ => panic!("Expected Struct"),
@@ -241,7 +253,10 @@ mod tests {
         match definitions[0] {
             Definition::StructDef(ref struct_def) => {
                 assert_eq!(
-                    Some((module_id.clone(), "0:0:struct_a".to_string())),
+                    Some(ResolvedName::new(
+                        module_id.clone(),
+                        "0:0:struct_a".to_string()
+                    )),
                     struct_def.name.resolved
                 );
             }
@@ -252,14 +267,20 @@ mod tests {
             Definition::FnDef(ref fn_def) => match fn_def.body.definitions.as_ref().unwrap()[0] {
                 Definition::StructDef(ref struct_def) => {
                     assert_eq!(
-                        Some((module_id.clone(), "1:0:struct_b".to_string())),
+                        Some(ResolvedName::new(
+                            module_id.clone(),
+                            "1:0:struct_b".to_string()
+                        )),
                         struct_def.name.resolved
                     );
                     match struct_def.field_types["field_a"] {
                         Type::Struct(ref type_ref) => {
                             assert_eq!(
+                                Some(ResolvedName::new(
+                                    module_id.clone(),
+                                    "0:0:struct_a".to_string()
+                                )),
                                 type_ref.resolved,
-                                Some((module_id.clone(), "0:0:struct_a".to_string()))
                             );
                         }
                         _ => panic!("Expected Struct"),

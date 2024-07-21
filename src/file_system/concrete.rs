@@ -1,2 +1,2 @@
-mod mock_fs;
-mod system_fs;
+pub mod mock_fs;
+pub mod system_fs;
