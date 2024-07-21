@@ -1,3 +1,4 @@
+use crate::back::hmasm_types::HmasmFile;
 use crate::front::definition_table::DefinitionTable;
 use crate::modules::{ModuleDependencies, ModuleId};
 use camino::Utf8PathBuf;
@@ -20,7 +21,7 @@ pub struct ModuleCachableData {
     pub read_on: u128,                   // when this data is from
     pub direct_deps: ModuleDependencies, // direct dependencies, used for computing the dependency graph
     pub definitions: DefinitionTable,    // front-end objects
-    pub object: Option<String>,          // the object code created by the back-end
+    pub object: Option<HmasmFile>,       // the object code created by the back-end
 }
 
 impl ModuleNode {
