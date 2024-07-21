@@ -12,6 +12,7 @@ mod cache;
 mod types;
 mod utf8buf_utils;
 
+#[derive(Debug)]
 enum ModuleBuildError {
     NoMainInRoot,
     FileNoLongerExists,
@@ -57,9 +58,12 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                 if let Some(module_name) = file_path.file_name() {
                     queue.push_back(file_path.with_extension(""));
                     let rel_path = &create_rel_path(&file_path, &path);
-                    let id = module_id_from_local(package_name, &utf8path_buf_to_vec(&rel_path));
+                    let id = module_id_from_local(
+                        package_name,
+                        &utf8path_buf_to_vec(&rel_path.with_extension("")),
+                    );
 
-                    if find_root && module_name == "main" {
+                    if find_root && module_name == "main.ing" {
                         self.module_graph.root = Some(id.clone());
                         find_root = false;
                     }
@@ -131,6 +135,10 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
         }
 
         Ok(())
+    }
+
+    pub fn get_module_graph(&self) -> &ModuleGraph {
+        &self.module_graph
     }
 }
 

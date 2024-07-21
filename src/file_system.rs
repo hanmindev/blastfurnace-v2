@@ -1,4 +1,4 @@
-mod concrete;
+pub mod concrete;
 
 use camino::Utf8PathBuf;
 use std::io::{Read, Write};
