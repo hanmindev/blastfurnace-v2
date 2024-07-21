@@ -63,13 +63,9 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
                         &utf8path_buf_to_vec(&rel_path.with_extension("")),
                     );
 
-                    if is_root_dir && module_name == "main.ing" {
-                        if is_root_package {
-                            self.module_graph.root = Some(id.clone());
-                            found_root_module = true;
-                        } else {
-                            continue;
-                        }
+                    if is_root_dir && module_name == "main.ing" && is_root_package {
+                        self.module_graph.root = Some(id.clone());
+                        found_root_module = true;
                     }
 
                     queue.push_back(file_path.with_extension(""));
