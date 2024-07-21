@@ -159,11 +159,38 @@ pub type ModuleDependencies = HashSet<ModuleId>;
 
 #[cfg(test)]
 mod tests {
+    use crate::file_system::concrete::mock_fs::MockFileSystem;
+    use crate::modules::ModuleBuilder;
+    use camino::Utf8PathBuf;
+
     #[test]
     fn test_module_id_from_local() {
         let package_name = "package_a";
         let file_path = vec!["module_a".to_string(), "module_b".to_string()];
         let module_id = crate::modules::module_id_from_local(package_name, &file_path);
         assert_eq!(module_id, "package_a::module_a::module_b");
+    }
+
+    #[test]
+    fn test_build_modules() {
+        let mut mock_fs = MockFileSystem::new();
+        mock_fs.insert_dir(Utf8PathBuf::from("pkg/package_a"));
+        mock_fs.insert_file(Utf8PathBuf::from("pkg/package_a/main.ing"), "fn main() {}");
+        mock_fs.insert_file(
+            Utf8PathBuf::from("pkg/package_a/module_a.ing"),
+            "static a: int;",
+        );
+
+        let mut module_builder = ModuleBuilder::new(&mut mock_fs, None);
+
+        module_builder
+            .add_fs_package("package_a", &Utf8PathBuf::from("pkg/package_a"), true)
+            .unwrap();
+
+        module_builder.load_module_bodies().unwrap();
+
+        let module_graph = module_builder.get_module_graph();
+
+        assert_eq!(module_graph.root, Some("package_a::main".to_string()));
     }
 }
