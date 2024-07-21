@@ -1,0 +1,4 @@
+struct test {
+    a: sample_dep::dep::contain,
+    b: sample_conflict::nested_dep::test,
+}

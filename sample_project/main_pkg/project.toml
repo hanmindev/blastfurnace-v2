@@ -1,0 +1,7 @@
+[package]
+name = "main_pkg"
+version = "0.1.0"
+
+[dependencies]
+sample_dep = { path = "../sample_dep" }
+sample_conflict = { path = "../sample_conflict_dep_a" }

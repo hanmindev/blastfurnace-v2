@@ -1,0 +1,5 @@
+[package]
+name = "sample_dep_conflict"
+version = "0.1.0"
+
+[dependencies]

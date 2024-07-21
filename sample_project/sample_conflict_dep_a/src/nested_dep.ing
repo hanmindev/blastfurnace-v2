@@ -1,0 +1,3 @@
+pub struct test {
+    pub a: int,
+}
