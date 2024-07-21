@@ -14,7 +14,7 @@ fn stitch_path(
                 full_item_path.item_path.push(tail_unwrap[i].clone());
             }
 
-            return (
+            return ResolvedName::new(
                 module_id_from_local(&full_item_path.package_name, &full_item_path.item_path),
                 tail_unwrap.last().unwrap().clone(),
             );
@@ -22,7 +22,7 @@ fn stitch_path(
     }
 
     let item = full_item_path.item_path.pop().unwrap_or("".to_string());
-    return (
+    return ResolvedName::new(
         module_id_from_local(&full_item_path.package_name, &full_item_path.item_path),
         item,
     );

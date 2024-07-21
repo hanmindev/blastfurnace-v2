@@ -2,7 +2,7 @@ use crate::front::ast_types::{FnDef, ResolvedName, StaticVarDef, StructDef, VarD
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DefinitionTable {
     pub static_var_map: HashMap<ResolvedName, StaticVarDef>,
     pub var_map: HashMap<ResolvedName, VarDef>,

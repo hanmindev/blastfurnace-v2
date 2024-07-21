@@ -55,7 +55,20 @@ pub type RawNameRoot = String;
 pub type RawNameTailNode = String;
 pub type RawName = (RawNameRoot, Option<Vec<RawNameTailNode>>);
 pub type ItemName = String;
-pub type ResolvedName = (ModuleId, ItemName);
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Serialize, Deserialize)]
+pub struct ResolvedName {
+    pub module_id: ModuleId,
+    pub item_name: ItemName,
+}
+
+impl ResolvedName {
+    pub fn new(module_id: ModuleId, item_name: ItemName) -> ResolvedName {
+        ResolvedName {
+            module_id,
+            item_name,
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct VarDummy;
