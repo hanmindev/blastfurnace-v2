@@ -228,4 +228,22 @@ mod tests {
             Type::Int
         );
     }
+
+    #[test]
+    fn test_irregular_package_name() {
+        let mut mock_fs = MockFileSystem::new();
+        mock_fs.insert_dir(Utf8PathBuf::from("pkg/package_a"));
+        mock_fs.insert_file(Utf8PathBuf::from("pkg/package_a/main.ing"), "fn main() {}");
+
+        let mut module_builder = ModuleBuilder::new(&mut mock_fs, None);
+
+        module_builder
+            .add_fs_package("pack", &Utf8PathBuf::from("pkg/package_a"), true)
+            .unwrap();
+
+        module_builder.load_module_bodies().unwrap();
+
+        let module_graph = module_builder.get_module_graph();
+        assert_eq!(module_graph.root, Some("pack::main".to_string()));
+    }
 }
