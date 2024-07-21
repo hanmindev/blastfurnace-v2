@@ -1,5 +1,5 @@
 use crate::modules::ModuleId;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Debug;
@@ -55,7 +55,7 @@ pub type RawNameRoot = String;
 pub type RawNameTailNode = String;
 pub type RawName = (RawNameRoot, Option<Vec<RawNameTailNode>>);
 pub type ItemName = String;
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub struct ResolvedName {
     pub module_id: ModuleId,
     pub item_name: ItemName,
@@ -67,6 +67,31 @@ impl ResolvedName {
             module_id,
             item_name,
         }
+    }
+}
+impl Serialize for ResolvedName {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&format!("{}+{}", self.module_id, self.item_name))
+    }
+}
+
+impl<'de> Deserialize<'de> for ResolvedName {
+    fn deserialize<D>(deserializer: D) -> Result<ResolvedName, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        let parts: Vec<&str> = s.split('+').collect();
+        if parts.len() != 2 {
+            return Err(serde::de::Error::custom("Invalid ResolvedName format"));
+        }
+        Ok(ResolvedName {
+            module_id: parts[0].parse().unwrap(),
+            item_name: parts[1].to_string(),
+        })
     }
 }
 
