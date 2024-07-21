@@ -120,10 +120,6 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
     pub fn load_cache(&mut self) {
         self.build_cache.load_cache();
     }
-
-    pub fn get_module_graph(&self) -> &ModuleGraph {
-        &self.module_graph
-    }
 }
 
 fn create_rel_path(file_path: &Utf8PathBuf, package_path: &Utf8PathBuf) -> Utf8PathBuf {
@@ -183,7 +179,7 @@ mod tests {
 
         module_builder.load_module_bodies().unwrap();
 
-        let module_graph = module_builder.get_module_graph();
+        let module_graph = module_builder.module_graph;
 
         assert_eq!(module_graph.root, Some("package_a::main".to_string()));
         assert_eq!(module_graph.nodes.len(), 3);
@@ -271,7 +267,7 @@ mod tests {
 
         module_builder.load_module_bodies().unwrap();
 
-        let module_graph = module_builder.get_module_graph();
+        let module_graph = module_builder.module_graph;
         assert_eq!(module_graph.root, Some("pack::main".to_string()));
     }
 
@@ -306,7 +302,7 @@ mod tests {
 
         module_builder.load_module_bodies().unwrap();
 
-        let module_graph = module_builder.get_module_graph();
+        let module_graph = module_builder.module_graph;
         assert_eq!(module_graph.root, Some("package_a::main".to_string()));
     }
 }
