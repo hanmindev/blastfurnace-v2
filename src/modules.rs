@@ -2,7 +2,7 @@ use crate::file_system::FileSystem;
 use crate::modules::cache::BuildCacheLayer;
 use crate::modules::types::ModuleGraph;
 use crate::modules::utf8buf_utils::utf8path_buf_to_vec;
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8PathBuf;
 use std::collections::{HashSet, VecDeque};
 use std::io::Read;
 
@@ -25,7 +25,7 @@ pub struct ModuleBuilder<'p, T: FileSystem> {
 }
 
 impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
-    pub fn new(file_system: &'p mut T, cache: Option<Box<Utf8Path>>) -> Self {
+    pub fn new(file_system: &'p mut T, cache: Option<Utf8PathBuf>) -> Self {
         Self {
             module_graph: ModuleGraph::new(),
             build_cache: BuildCacheLayer::new(file_system, cache),

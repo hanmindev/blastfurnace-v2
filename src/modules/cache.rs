@@ -3,18 +3,18 @@ use crate::front::ast_types::{FullItemPath, ItemPath, PackageName};
 use crate::front::parse_file;
 use crate::modules::types::ModuleCachableData;
 use crate::modules::{module_id_from_local, ModuleBuildError, ModuleBuildResult, ModuleId};
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8PathBuf;
 use std::collections::HashMap;
 use std::io::Write;
 
 pub struct BuildCacheLayer<'p, T: FileSystem> {
     pub file_system: &'p mut T,
-    cache_location: Option<Box<Utf8Path>>,
+    cache_location: Option<Utf8PathBuf>,
     cache: Option<HashMap<ModuleId, ModuleCachableData>>,
 }
 
 impl<T: FileSystem> BuildCacheLayer<'_, T> {
-    pub fn new(file_system: &mut T, cache_location: Option<Box<Utf8Path>>) -> BuildCacheLayer<T> {
+    pub fn new(file_system: &mut T, cache_location: Option<Utf8PathBuf>) -> BuildCacheLayer<T> {
         BuildCacheLayer {
             file_system,
             cache_location,
