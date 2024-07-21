@@ -1,4 +1,7 @@
+use crate::back::ir_to_asm;
 use crate::file_system::FileSystem;
+use crate::middle::generate_ir;
+use crate::middle::global_definition_table::GlobalDefinitionTable;
 use crate::modules::cache::BuildCacheLayer;
 use crate::modules::types::ModuleGraph;
 use crate::modules::utf8buf_utils::utf8path_buf_to_vec;
@@ -119,6 +122,27 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
 
     pub fn load_cache(&mut self) {
         self.build_cache.load_cache();
+    }
+
+    pub fn build_all_modules(&mut self) {
+        let mut global_definition_table = GlobalDefinitionTable::new();
+        for (module_id, node) in self.module_graph.nodes.iter_mut() {
+            let body = &mut node.body.as_ref().unwrap();
+            global_definition_table.add_definition_table(module_id.clone(), &body.definitions);
+        }
+
+        for (module_id, node) in self.module_graph.nodes.iter_mut() {
+            let mut body = &mut node.body.as_mut().unwrap();
+            if body.object.is_some() {
+                continue;
+            }
+
+            let ir = generate_ir(module_id, &global_definition_table);
+
+            let asm = ir_to_asm(module_id, ir);
+
+            body.object = Some(asm);
+        }
     }
 }
 
