@@ -160,6 +160,7 @@ pub type ModuleDependencies = HashSet<ModuleId>;
 #[cfg(test)]
 mod tests {
     use crate::file_system::concrete::mock_fs::MockFileSystem;
+    use crate::front::ast_types::Type;
     use crate::modules::ModuleBuilder;
     use camino::Utf8PathBuf;
 
@@ -181,10 +182,19 @@ mod tests {
             "static a: int;",
         );
 
+        mock_fs.insert_dir(Utf8PathBuf::from("pkg/package_b"));
+        mock_fs.insert_file(
+            Utf8PathBuf::from("pkg/package_b/module_b.ing"),
+            "static b: int;",
+        );
+
         let mut module_builder = ModuleBuilder::new(&mut mock_fs, None);
 
         module_builder
             .add_fs_package("package_a", &Utf8PathBuf::from("pkg/package_a"), true)
+            .unwrap();
+        module_builder
+            .add_fs_package("package_b", &Utf8PathBuf::from("pkg/package_b"), false)
             .unwrap();
 
         module_builder.load_module_bodies().unwrap();
@@ -192,5 +202,65 @@ mod tests {
         let module_graph = module_builder.get_module_graph();
 
         assert_eq!(module_graph.root, Some("package_a::main".to_string()));
+        assert_eq!(module_graph.nodes.len(), 3);
+
+        assert_eq!(
+            module_graph.package_map.get("package_a").unwrap(),
+            &Utf8PathBuf::from("pkg/package_a")
+        );
+
+        let main_definition_table = &module_graph
+            .nodes
+            .get("package_a::main")
+            .as_ref()
+            .unwrap()
+            .body
+            .as_ref()
+            .unwrap()
+            .definitions;
+        let module_a_definition_table = &module_graph
+            .nodes
+            .get("package_a::module_a")
+            .as_ref()
+            .unwrap()
+            .body
+            .as_ref()
+            .unwrap()
+            .definitions;
+        let module_b_definition_table = &module_graph
+            .nodes
+            .get("package_b::module_b")
+            .as_ref()
+            .unwrap()
+            .body
+            .as_ref()
+            .unwrap()
+            .definitions;
+
+        assert_eq!(
+            main_definition_table
+                .fn_map
+                .get(&("package_a::main".to_string(), "0:0:main".to_string()))
+                .unwrap()
+                .return_type,
+            Type::Void
+        );
+        assert_eq!(
+            module_a_definition_table
+                .static_var_map
+                .get(&("package_a::module_a".to_string(), "0:0:a".to_string()))
+                .unwrap()
+                .ty,
+            Type::Int
+        );
+
+        assert_eq!(
+            module_b_definition_table
+                .static_var_map
+                .get(&("package_b::module_b".to_string(), "0:0:b".to_string()))
+                .unwrap()
+                .ty,
+            Type::Int
+        );
     }
 }
