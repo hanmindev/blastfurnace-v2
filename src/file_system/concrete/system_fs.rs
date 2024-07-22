@@ -1,12 +1,12 @@
 use crate::file_system::{FileSystem, FileSystemError, FileSystemResult, Utf8PathBuf};
-use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
+use std::{env, fs};
 
 pub struct SystemFs;
 
 impl SystemFs {
-    fn new() -> FileSystemResult<SystemFs> {
+    pub fn new() -> FileSystemResult<SystemFs> {
         Ok(SystemFs)
     }
 }

@@ -31,17 +31,17 @@ struct Package {
     dependencies: Vec<PackageDependency>,
 }
 
-struct PackageReader<T: FileSystem> {
+pub struct PackageReader<'p, T: FileSystem> {
     root_package: PackageName,
     packages: HashMap<PackageName, Package>,
 
     dequeue: VecDeque<(PackageDependency, Utf8PathBuf)>,
-    fs: T,
+    fs: &'p T,
 }
 
-impl<T: FileSystem> PackageReader<T> {
-    fn new(root_package_location: Utf8PathBuf, fs: T) -> PackageReader<T> {
-        let mut package = read_project_toml(&root_package_location, &fs).unwrap();
+impl<'p, T: FileSystem> PackageReader<'p, T> {
+    pub fn new(root_package_location: Utf8PathBuf, fs: &T) -> PackageReader<T> {
+        let mut package = read_project_toml(&root_package_location, fs).unwrap();
         package.root = true;
 
         let mut pr = PackageReader {
@@ -68,12 +68,12 @@ impl<T: FileSystem> PackageReader<T> {
     fn read_package(&mut self, package_dependency: &PackageDependency, current_path: &Utf8PathBuf) {
         let (package, package_path) = match &package_dependency.source {
             PackageSource::Local(path) => {
-                let mut package = read_project_toml(&path, &self.fs).unwrap();
                 let package_path = if path.is_absolute() {
                     path.clone()
                 } else {
                     current_path.join(path)
                 };
+                let mut package = read_project_toml(&package_path, self.fs).unwrap();
                 package.stored_location = Some(package_path.clone());
                 (package, package_path)
             }
@@ -94,14 +94,19 @@ impl<T: FileSystem> PackageReader<T> {
         }
     }
 
-    fn add_packages(&mut self, module_builder: &mut ModuleBuilder<T>) {
+    pub fn add_packages_to_modules(&mut self, module_builder: &mut ModuleBuilder<T>) {
         for (package_name, package) in &mut self.packages {
+            let a = package_name.as_str();
+            let b = self.root_package.as_str();
+
+            println!("stored {:?}", package.stored_location.as_ref().unwrap());
+
             // TODO: add proper error handling
             module_builder
                 .add_fs_package(
                     package_name,
                     &package.stored_location.as_ref().unwrap(),
-                    package_name == &self.root_package,
+                    a == b,
                 )
                 .unwrap();
         }

@@ -3,7 +3,7 @@ use crate::file_system::FileSystem;
 use crate::middle::generate_ir;
 use crate::middle::global_definition_table::GlobalDefinitionTable;
 use crate::modules::cache::BuildCacheLayer;
-use crate::modules::types::ModuleGraph;
+use crate::modules::types::{ModuleGraph, ModuleNode};
 use crate::modules::utf8buf_utils::utf8path_buf_to_vec;
 use camino::Utf8PathBuf;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -45,6 +45,9 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
             .package_map
             .insert(package_name.to_string(), path.clone());
 
+        let mut path = path.clone();
+        path.push("src");
+
         let mut queue = VecDeque::from([path.clone()]);
 
         let mut is_root_dir = true;
@@ -58,7 +61,7 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
 
             for file_path in file_paths {
                 if let Some(module_name) = file_path.file_name() {
-                    let rel_path = &create_rel_path(&file_path, &path);
+                    let rel_path = &file_path;
                     let id = module_id_from_local(
                         package_name,
                         &utf8path_buf_to_vec(&rel_path.with_extension("")),
@@ -88,12 +91,20 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
     pub fn load_module_bodies(&mut self) -> ModuleBuildResult<()> {
         for node in self.module_graph.nodes.values_mut() {
             let rel_path = node.rel_path.clone();
-            let abs_path = self
+
+            println!("rel_path: {:?}", rel_path);
+
+            let mut abs_path = &mut self
                 .module_graph
                 .package_map
                 .get(&node.package_name)
+                .as_mut()
                 .unwrap()
-                .join(&rel_path);
+                .clone();
+            abs_path.push("src");
+            abs_path.push(&rel_path);
+
+            println!("abs_path: {:?}", abs_path);
 
             node.body = Some(self.build_cache.take_module(
                 &node.package_name,
@@ -149,9 +160,15 @@ impl<'p, T: FileSystem> ModuleBuilder<'p, T> {
             node.body.as_mut().unwrap().object = Some(file.clone());
         }
     }
+
+    pub fn get_modules(&self) -> &HashMap<ModuleId, ModuleNode> {
+        &self.module_graph.nodes
+    }
 }
 
 fn create_rel_path(file_path: &Utf8PathBuf, package_path: &Utf8PathBuf) -> Utf8PathBuf {
+    println!("stripping {} from {}", package_path, file_path);
+
     file_path.strip_prefix(package_path).unwrap().to_path_buf()
 }
 
@@ -162,6 +179,10 @@ pub fn module_id_from_local(package_name: &str, file_path: &Vec<String>) -> Modu
     file_path
         .iter()
         .fold(package_name.to_string(), |a, b| a + "::" + b)
+}
+
+pub fn module_id_to_path_buf(module_id: &ModuleId) -> Utf8PathBuf {
+    Utf8PathBuf::from(module_id.replace("::", "/"))
 }
 
 pub type ModuleDependencies = HashSet<ModuleId>;
@@ -185,15 +206,15 @@ mod tests {
     fn test_build_modules() {
         let mut mock_fs = MockFileSystem::new();
         mock_fs.insert_dir(Utf8PathBuf::from("pkg/package_a"));
-        mock_fs.insert_file(Utf8PathBuf::from("pkg/package_a/main.ing"), "fn main() {}");
+        mock_fs.insert_file(Utf8PathBuf::from("pkg/package_a/src/main.ing"), "fn main() {}");
         mock_fs.insert_file(
-            Utf8PathBuf::from("pkg/package_a/module_a.ing"),
+            Utf8PathBuf::from("pkg/package_a/src/module_a.ing"),
             "static a: int;",
         );
 
         mock_fs.insert_dir(Utf8PathBuf::from("pkg/package_b"));
         mock_fs.insert_file(
-            Utf8PathBuf::from("pkg/package_b/module_b.ing"),
+            Utf8PathBuf::from("pkg/package_b/src/module_b.ing"),
             "static b: int;",
         );
 

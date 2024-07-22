@@ -3,4 +3,3 @@ name = "sample_dep"
 version = "0.1.0"
 
 [dependencies]
-sample_conflict = { path = "../sample_conflict_dep_b" }

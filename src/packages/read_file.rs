@@ -16,6 +16,8 @@ pub fn read_project_toml<T: FileSystem>(
     fs: &T,
 ) -> Result<Package, PackageError> {
     let project_toml = project_directory.join("project.toml");
+    println!("Reading project.toml: {:?}", project_toml);
+
     let mut reader = fs
         .get_reader(&project_toml)
         .map_err(|e| PackageError::IoError(e))?;

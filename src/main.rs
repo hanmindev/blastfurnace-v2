@@ -1,4 +1,5 @@
 mod back;
+mod datapack;
 mod file_system;
 mod front;
 mod middle;

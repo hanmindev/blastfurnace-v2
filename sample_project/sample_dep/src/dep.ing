@@ -1,3 +1,3 @@
-pub struct contain {
-    pub thing: sample_conflict::nested_dep::test,
+struct contain {
+    thing: int
 }

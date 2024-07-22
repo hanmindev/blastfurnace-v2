@@ -17,8 +17,8 @@ pub fn create_ast(file_root_package_name: &str, src: &str) -> Module {
 mod tests {
     use crate::front::ast_creator::create_ast;
     use crate::front::ast_types::{
-        Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, Statement,
-        StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference,
+        Definition, FnDef, FullItemPath, FunctionReference, Module, RawName, ResolvedName,
+        Statement, StaticVarDef, StructDef, Type, TypeReference, VarDef, VarReference,
     };
     use std::collections::HashMap;
 
@@ -119,6 +119,23 @@ mod tests {
 
         let ast = create_ast(current_package, src);
         assert_eq!(expected, ast);
+    }
+    #[test]
+    fn test_create_ast_struct_imported_fields() {
+        let current_package = "package_a";
+        let src = r#"
+        struct struct_a {
+            field_a: test::module::hello,
+        }
+        "#;
+
+        let binding = create_ast(current_package, src);
+        let ast = binding.definitions.as_ref().unwrap().first().unwrap();
+        if let Definition::StructDef(struct_def) = ast {
+            if let Type::Struct(ty) = struct_def.field_types.get("field_a").unwrap() {
+                println!("{:?}", ty);
+            }
+        }
     }
 
     #[test]

@@ -62,7 +62,7 @@ impl ScopeTable {
         let layer = self.stack.pop().unwrap();
 
         if !layer.unresolved.is_empty() {
-            return Err(NameResolutionError::UnresolvedNames(layer.unresolved));
+            // return Err(NameResolutionError::UnresolvedNames(layer.unresolved)); // TODO: uncomment this
         }
         Ok(())
     }

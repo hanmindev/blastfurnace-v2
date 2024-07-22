@@ -63,6 +63,8 @@ impl<T: FileSystem> BuildCacheLayer<'_, T> {
         abs_path: &Utf8PathBuf,
     ) -> ModuleBuildResult<ModuleCachableData> {
         let id = module_id_from_local(package_name, item_path);
+
+        println!("abs {:?}", abs_path);
         let age = self
             .file_system
             .get_file_age(&abs_path)
