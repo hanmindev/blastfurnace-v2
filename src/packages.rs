@@ -2,9 +2,11 @@ mod read_file;
 
 use crate::file_system::FileSystem;
 use crate::front::ast_types::PackageName;
+use crate::modules::ModuleBuilder;
 use crate::packages::read_file::read_project_toml;
 use camino::Utf8PathBuf;
 use serde::Deserialize;
+use std::cmp::PartialEq;
 use std::collections::{HashMap, VecDeque};
 
 struct Version(i32, i32, i32);
@@ -89,6 +91,19 @@ impl<T: FileSystem> PackageReader<T> {
 
         for dep in &package.dependencies {
             self.dequeue.push_back((dep.clone(), package_path.clone()));
+        }
+    }
+
+    fn add_packages(&mut self, module_builder: &mut ModuleBuilder<T>) {
+        for (package_name, package) in &mut self.packages {
+            // TODO: add proper error handling
+            module_builder
+                .add_fs_package(
+                    package_name,
+                    &package.stored_location.as_ref().unwrap(),
+                    package_name == &self.root_package,
+                )
+                .unwrap();
         }
     }
 }

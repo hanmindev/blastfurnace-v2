@@ -14,7 +14,7 @@ mod types;
 mod utf8buf_utils;
 
 #[derive(Debug)]
-enum ModuleBuildError {
+pub enum ModuleBuildError {
     NoMainInRoot,
     FileNoLongerExists,
     FileReadError,
