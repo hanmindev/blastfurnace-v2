@@ -12,13 +12,9 @@ pub fn generate_ir(
     // This is a placeholder implementation that just prints "Hello, world!".
     return IRModule {
         id: module_id.clone(),
-        functions: vec![
-            IRFunction {
-                name: "main".to_string(),
-                instructions: vec![IRInstruction::MCommand(
-                    "say Hello, world!".to_string(),
-                )],
-            },
-        ],
+        functions: vec![IRFunction {
+            name: "main".to_string(),
+            instructions: vec![IRInstruction::MCommand("say Hello, world!".to_string())],
+        }],
     };
 }
