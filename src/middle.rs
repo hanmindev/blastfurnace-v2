@@ -9,7 +9,7 @@ pub fn generate_ir(
     module_id: &ModuleId,
     global_definition_table: &GlobalDefinitionTable,
 ) -> IRModule {
-    // This is a placeholder implementation that just prints "Hello, world!".
+    // TODO: This is a placeholder implementation that just prints "Hello, world!".
     return IRModule {
         id: module_id.clone(),
         functions: vec![IRFunction {
