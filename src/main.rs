@@ -1,5 +1,6 @@
 mod file_system;
 mod front;
+mod middle;
 mod modules;
 
 fn main() {
